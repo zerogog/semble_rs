@@ -312,6 +312,32 @@ cargo install --path .
 semble_rs --help
 ```
 
+## 검색 팁: 쿼리 작성법
+
+semble_rs는 BM25(키워드) + Semantic(임베딩) 하이브리드 검색입니다. 쿼리 유형에 따라 결과가 크게 달라집니다.
+
+**정확한 심볼을 알 때** — 심볼명을 그대로 사용:
+
+```bash
+semble_rs search "introPropsHTML" .           # 0.096점 — 정확히 찾음
+semble_rs search "getTitleCardPanelRect" .    # 심볼 쿼리 → BM25 가중치 높임 (alpha=0.3)
+```
+
+**정확한 심볼을 모를 때** — 기능을 설명하는 자연어 사용:
+
+```bash
+semble_rs search "intro outro panel UI properties" .   # 기능 설명 → 관련 코드 찾음
+semble_rs search "aspect ratio export settings" .      # 의미 검색이 보완
+```
+
+**하지 마세요** — 심볼명을 추측해서 검색:
+
+```bash
+semble_rs search "titleCardPropsHTML" .       # 존재하지 않는 이름 → 0.019점, 부정확
+```
+
+존재하지 않는 심볼명은 BM25에서 정확히 매칭되지 않고, 임베딩도 실제 코드와 거리가 멀어 점수가 낮습니다. **모르면 추측하지 말고, 자연어로 기능을 설명하세요.**
+
 ## 사용법
 
 ```bash
@@ -348,6 +374,7 @@ semble_rs savings
 1. 코드 찾기는 find/grep 전에 semble_rs search를 먼저 실행
 2. 파일 수정 전에 semble_rs deps로 구조 파악
 3. 리팩토링 전에 semble_rs impact로 영향 범위 확인
+4. 정확한 심볼명을 모르면 추측하지 말고 자연어로 기능 설명
 
 ## 명령어
 

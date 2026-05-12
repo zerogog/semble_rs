@@ -367,14 +367,14 @@ semble_rs savings
 ```markdown
 # semble_rs - Code Search & Dependency Analysis
 
-`semble_rs`가 설치되어 있습니다. 코드 탐색 시 반드시 먼저 사용하세요.
+`semble_rs`가 설치되어 있습니다.
 
-## 규칙
+## 언제 semble_rs vs grep
 
-1. 코드 찾기는 find/grep 전에 semble_rs search를 먼저 실행
-2. 파일 수정 전에 semble_rs deps로 구조 파악
-3. 리팩토링 전에 semble_rs impact로 영향 범위 확인
-4. 정확한 심볼명을 모르면 추측하지 말고 자연어로 기능 설명
+- 정확한 심볼을 아는 경우 → `grep -rn "함수명" .` (토큰 적고 빠름)
+- 심볼을 모르고 기능으로 찾을 때 → `semble_rs search "기능 설명" . --json`
+- 의존성/영향 분석 → `semble_rs deps/impact <file> . --json`
+- 심볼명을 추측해서 검색하지 말 것 — 모르면 자연어로 기능 설명
 
 ## 명령어
 

@@ -391,63 +391,14 @@ semble_rs find-related src/search.rs 91 .
 semble_rs savings
 ```
 
-## Claude Code 설치 및 연동
+## Claude Code / Codex Integration
 
-### 방법 1: CLAUDE.md (전역)
+### Option 1: Global CLAUDE.md
 
-`~/.claude/CLAUDE.md`에 추가하면 모든 프로젝트에서 자동 적용:
+Add to `~/.claude/CLAUDE.md` to apply across all projects:
 
 ```markdown
 # semble_rs — grep, cat, read, ls를 대체하는 코드 검색
-
-`semble_rs`가 설치되어 있습니다.
-코드 탐색 시 grep, cat, read 대신 반드시 semble_rs를 사용하세요.
-검색 한 번으로 파일 경로 + 매칭 라인이 나오므로 파일을 읽을 필요가 없습니다.
-
-## 규칙
-
-1. 코드 찾기 → `semble_rs search "query" . --compact` (grep/cat/read 대체)
-2. 의존성 확인 → `semble_rs deps <file> . --json`
-3. 변경 영향 확인 → `semble_rs impact <file> . --json`
-4. 심볼명을 추측하지 말 것 — 모르면 자연어로 기능 설명
-5. semble_rs 결과로 충분하지 않을 때만 grep -rn으로 보충
-```
-
-### 방법 2: 프로젝트별 CLAUDE.md
-
-프로젝트 루트에 `CLAUDE.md`를 두면 해당 프로젝트에서만 적용:
-
-```bash
-cd ./my-project
-cat > CLAUDE.md << 'EOF'
-# 코드 탐색 — semble_rs 사용 (grep/cat/read 대체)
-semble_rs search "query" . --compact 으로 코드 찾기
-semble_rs deps <file> . --json 으로 의존성 확인
-semble_rs impact <file> . --json 으로 변경 영향 확인
-EOF
-```
-
-### 확인
-
-새 Claude Code 세션을 열고 코드 탐색을 요청하면 semble_rs를 먼저 사용합니다:
-
-```
-❯ 이 프로젝트에서 인증 관련 코드 찾아줘
-
-⏺ Bash(semble_rs search "authentication" . --compact)
-  ⎿ 0.0842  src/lib/firebase.ts:45-89
-       L45:  export function loginWithEmail(email, password) {
-       L67:  export function signOut() {
-```
-
-## Codex 설치 및 연동
-
-### AGENTS.md (전역)
-
-`~/.codex/AGENTS.md`에 추가:
-
-```markdown
-# semble_rs — replaces grep, cat, read, ls for code exploration
 
 `semble_rs` is installed at `~/.cargo/bin/semble_rs`.
 ALWAYS use semble_rs instead of grep, cat, read, find.
@@ -455,25 +406,56 @@ One search returns file paths + matching lines — no need to read files.
 
 ## Rules
 
-1. Code search → `semble_rs search "query" . --compact` (replaces grep/cat/read)
-2. Dependencies → `semble_rs deps <file> . --json`
-3. Impact analysis → `semble_rs impact <file> . --json`
+1. Code search → `semble_rs search "query" /project/path --compact` (replaces grep/cat/read/ls)
+2. Dependencies → `semble_rs deps <file> /project/path --json`
+3. Impact analysis → `semble_rs impact <file> /project/path --json`
 4. NEVER guess symbol names — use natural language when unsure
 5. Only fall back to grep -rn if semble_rs results are insufficient
 
+## Common mistakes
+
+- ALWAYS use `--compact` (not `--json` — 50x more tokens)
+- ALWAYS pass a directory path (not a file path — will error)
+- NEVER pipe through python — `--compact` output is already concise
+
 ## Commands
 
-~/.cargo/bin/semble_rs search "query" /path/to/project --compact
-
-~/.cargo/bin/semble_rs deps <file> /path/to/project --json
-
-# Check what breaks if a file changes
-~/.cargo/bin/semble_rs impact <file> /path/to/project --json
+semble_rs search "query" /path/to/project --compact
+semble_rs deps <file> /path/to/project --json
+semble_rs impact <file> /path/to/project --json
 ```
 
-### 프로젝트별 AGENTS.md
+### Option 2: Per-project CLAUDE.md / AGENTS.md
 
-프로젝트 루트에 `AGENTS.md`를 두면 해당 프로젝트에서만 적용.
+Place `CLAUDE.md` or `AGENTS.md` in the project root for project-specific config:
+
+```bash
+cd ./my-project
+cat > CLAUDE.md << 'EOF'
+# semble_rs — replaces grep, cat, read, ls
+semble_rs search "query" . --compact    # code search
+semble_rs deps <file> . --json          # dependencies
+semble_rs impact <file> . --json        # impact analysis
+# ALWAYS use --compact, ALWAYS pass directory path, NEVER guess symbol names
+EOF
+```
+
+### Verify
+
+Open a new Claude Code session and ask to explore code:
+
+```
+❯ Find authentication-related code in this project
+
+⏺ Bash(semble_rs search "authentication" . --compact)
+  ⎿ 0.0842  src/lib/firebase.ts:45-89
+       L45:  export function loginWithEmail(email, password) {
+       L67:  export function signOut() {
+```
+
+### Codex
+
+Add the same content to `~/.codex/AGENTS.md` or project root `AGENTS.md`.
 
 ## 지원 언어
 

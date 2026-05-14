@@ -2,8 +2,15 @@
 name = "semble"
 version = "0.1.0"
 edition = "2021"
-description = "Fast and Accurate Code Search for Agents"
+description = "Fast, accurate, AI-agent-native code search in Rust — hybrid BM25 + semantic search, Tree-sitter AST chunking, dependency & impact analysis. A drop-in replacement for grep/cat/read/ls in Claude Code, Codex, Cursor, Aider, and OpenHands agent sessions."
 license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/johunsang/semble_rs"
+repository = "https://github.com/johunsang/semble_rs"
+documentation = "https://github.com/johunsang/semble_rs#readme"
+keywords = ["code-search", "ai-agent", "semantic-search", "embeddings", "tree-sitter"]
+categories = ["command-line-utilities", "development-tools", "text-processing"]
+authors = ["hunsang jo <johunsang@gmail.com>"]
 
 [[bin]]
 name = "semble_rs"

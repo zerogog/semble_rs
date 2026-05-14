@@ -87,6 +87,16 @@ For agent sessions, `semble_rs plan "<task>" /path -k 5` can be used before the 
 
 `--outline` accuracy on the 33-query self-benchmark: **100% well-formed** signatures (parens balanced, no truncation).
 
+**Performance** (measured): the index is rebuilt every run (no persistent cache). Search and `plan` complete in roughly:
+
+| Repo size (code files) | search / plan |
+|---|---|
+| 22 (this repo) | ~0.15 s |
+| 57–120 | ~0.3–0.7 s |
+| 1,600 | ~10 s |
+
+`digest` is independent of repo size and processes a 3.3 MB CI log in ~20 ms.
+
 ## `digest` — build / test / CI output
 
 Auto-detects and compresses output from common toolchains. Errors and failures are never lost — only progress lines collapse to counts.

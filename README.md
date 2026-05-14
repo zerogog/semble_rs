@@ -145,16 +145,6 @@ Default embedding model (`potion-code-16M`) on a 50-query self-benchmark:
 
 The benchmark / eval scripts live in [`semble-train/`](./semble-train) (Python).
 
-### Experimental: swap the embedding model
-
-Point `SEMBLE_MODEL_PATH` at a local [model2vec](https://github.com/MinishLab/model2vec) output directory (`tokenizer.json` + `model.safetensors`):
-
-```bash
-SEMBLE_MODEL_PATH=/path/to/my-distilled-model semble_rs search "query" ./my-project --compact
-```
-
-We tried distilling `SFR-Embedding-Code-400M_R` — it underperformed our default (R@10 96% vs 100%, Korean R@5 40% vs 60%) because its vocabulary is English-code-only and breaks the Korean BM25 + semantic synergy. Pick teachers whose vocab covers your real corpus.
-
 ## Integration with AI coding agents
 
 ### Global `CLAUDE.md` (Claude Code) and `AGENTS.md` (Codex)

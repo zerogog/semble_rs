@@ -133,16 +133,6 @@ semble_rs digest --show-format my_log.txt
 
 벤치마크/평가 스크립트는 [`semble-train/`](./semble-train)에 있습니다 (Python).
 
-### 실험용: 임베딩 모델 교체
-
-`SEMBLE_MODEL_PATH`로 로컬 [model2vec](https://github.com/MinishLab/model2vec) 출력 디렉토리(`tokenizer.json` + `model.safetensors`)를 지정:
-
-```bash
-SEMBLE_MODEL_PATH=/path/to/my-distilled-model semble_rs search "쿼리" ./my-project --compact
-```
-
-`SFR-Embedding-Code-400M_R`를 teacher로 distill해봤지만 기본 모델보다 못했습니다 (R@10 96% vs 100%, 한글 R@5 40% vs 60%) — 영어 코드 vocab만 있어 한글 BM25 + semantic 시너지가 깨졌기 때문. teacher의 vocab이 실제 코퍼스를 cover해야 합니다.
-
 ## AI 에이전트 통합
 
 ### 글로벌 `CLAUDE.md` (Claude Code) / `AGENTS.md` (Codex)

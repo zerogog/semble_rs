@@ -131,20 +131,6 @@ semble_rs digest --show-format my_log.txt
 | **Kotlin** (v0.3.0+) | ✓ | ✓ | ✓ |
 | Ruby, PHP, Swift, others | ✓ | line-based fallback | — |
 
-## Search quality
-
-Default embedding model (`potion-code-16M`) on a 50-query self-benchmark:
-
-| Metric | Score |
-|---|---|
-| Recall@1 | 70% |
-| Recall@5 | 96% |
-| **Recall@10** | **100%** |
-| MRR | 0.81 |
-| Korean Recall@5 | 60% |
-
-The benchmark / eval scripts live in [`semble-train/`](./semble-train) (Python).
-
 ## Integration with AI coding agents
 
 ### Global `CLAUDE.md` (Claude Code) and `AGENTS.md` (Codex)

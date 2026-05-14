@@ -119,20 +119,6 @@ semble_rs digest --show-format my_log.txt
 
 **한글 검색 지원** — BM25 토크나이저가 유니코드(`\p{L}`)를 지원해 한글 주석, 문서, 변수명도 키워드 검색 가능. 원본 `semble`은 ASCII만 인식.
 
-## 검색 품질
-
-기본 임베딩 모델(`potion-code-16M`) — 50쿼리 ground-truth 자체 벤치마크:
-
-| 메트릭 | 점수 |
-|---|---|
-| Recall@1 | 70% |
-| Recall@5 | 96% |
-| **Recall@10** | **100%** |
-| MRR | 0.81 |
-| 한글 Recall@5 | 60% |
-
-벤치마크/평가 스크립트는 [`semble-train/`](./semble-train)에 있습니다 (Python).
-
 ## AI 에이전트 통합
 
 ### 글로벌 `CLAUDE.md` (Claude Code) / `AGENTS.md` (Codex)

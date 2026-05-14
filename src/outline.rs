@@ -276,7 +276,10 @@ mod tests {
         code.push_str("}\n");
 
         let sig = extract_signature_near(&code, 100, &[125]).unwrap();
-        assert!(sig.contains("second_one"), "expected second_one, got: {sig}");
+        assert!(
+            sig.contains("second_one"),
+            "expected second_one, got: {sig}"
+        );
     }
 
     #[test]
@@ -290,7 +293,10 @@ mod tests {
     fn multiline_signature_includes_return_type() {
         let code = "pub fn search_hybrid(\n    query: &str,\n    encoder: &StaticEncoder,\n    semantic_index: &SemanticIndex,\n    bm25_index: &Bm25Index,\n    chunks: &[Chunk],\n    top_k: usize,\n) -> Vec<SearchResult> {\n    todo!()\n}\n";
         let sig = extract_signature(code).unwrap();
-        assert!(sig.contains("-> Vec<SearchResult>"), "missing return type: {sig}");
+        assert!(
+            sig.contains("-> Vec<SearchResult>"),
+            "missing return type: {sig}"
+        );
         assert!(is_well_formed(&sig), "not well-formed: {sig}");
     }
 

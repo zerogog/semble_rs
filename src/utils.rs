@@ -3,8 +3,7 @@ use regex::Regex;
 
 use crate::types::{Chunk, SearchResult};
 
-static SCP_GIT_URL_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^[\w.-]+@[\w.-]+:").unwrap());
+static SCP_GIT_URL_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^[\w.-]+@[\w.-]+:").unwrap());
 
 const GIT_URL_SCHEMES: &[&str] = &[
     "https://",

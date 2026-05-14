@@ -123,9 +123,7 @@ pub fn boost_multi_chunk_files(scores: &mut HashMap<usize, f64>, chunks: &[Chunk
     for (&idx, &score) in scores.iter() {
         let fp = chunks[idx].file_path.as_str();
         *file_sum.entry(fp).or_default() += score;
-        let is_best = best_chunk
-            .get(fp)
-            .is_none_or(|&prev| score > scores[&prev]);
+        let is_best = best_chunk.get(fp).is_none_or(|&prev| score > scores[&prev]);
         if is_best {
             best_chunk.insert(fp, idx);
         }
@@ -180,7 +178,10 @@ fn definition_tier(chunk: &Chunk, names: &HashSet<String>, boost_unit: f64) -> O
         .and_then(|s| s.to_str())
         .unwrap_or("")
         .to_lowercase();
-    let multiplier = if names.iter().any(|name| stem_matches(&stem, &name.to_lowercase())) {
+    let multiplier = if names
+        .iter()
+        .any(|name| stem_matches(&stem, &name.to_lowercase()))
+    {
         1.5
     } else {
         1.0
@@ -342,12 +343,15 @@ fn boost_stem_matches(
             .entry(chunk.file_path.clone())
             .or_insert_with(|| {
                 let path = Path::new(&chunk.file_path);
-                let mut parts: HashSet<String> = split_identifier(
-                    path.file_stem().and_then(|s| s.to_str()).unwrap_or(""),
-                )
-                .into_iter()
-                .collect();
-                if let Some(parent_name) = path.parent().and_then(|p| p.file_name()).and_then(|n| n.to_str()) {
+                let mut parts: HashSet<String> =
+                    split_identifier(path.file_stem().and_then(|s| s.to_str()).unwrap_or(""))
+                        .into_iter()
+                        .collect();
+                if let Some(parent_name) = path
+                    .parent()
+                    .and_then(|p| p.file_name())
+                    .and_then(|n| n.to_str())
+                {
                     if parent_name != "." && parent_name != "/" && parent_name != ".." {
                         parts.extend(split_identifier(parent_name));
                     }

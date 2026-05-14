@@ -34,7 +34,9 @@ pub fn strip_comments(content: &str, lang: Option<&str>) -> String {
         }
 
         if let Some(prefix) = patterns.line_prefix {
-            if trimmed.starts_with(prefix) && !trimmed.starts_with(patterns.doc_prefix.unwrap_or("///")) {
+            if trimmed.starts_with(prefix)
+                && !trimmed.starts_with(patterns.doc_prefix.unwrap_or("///"))
+            {
                 continue;
             }
         }
@@ -191,7 +193,8 @@ mod tests {
 
     #[test]
     fn test_smart_strip_keeps_signatures() {
-        let code = "// comment\nfn main() {\n    let x = 1;\n    let y = 2;\n    println!(x + y);\n}\n";
+        let code =
+            "// comment\nfn main() {\n    let x = 1;\n    let y = 2;\n    println!(x + y);\n}\n";
         let result = smart_strip(code, Some("rust"));
         assert!(result.contains("fn main()"));
         assert!(result.contains("[..."));

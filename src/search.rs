@@ -36,7 +36,8 @@ fn selector_to_mask(selector: Option<&[usize]>, size: usize) -> Option<Vec<bool>
 
 fn find_match_lines(chunk: &Chunk, query: &str) -> Vec<MatchLine> {
     let query_lower = query.to_lowercase();
-    let keywords: Vec<&str> = query_lower.split_whitespace()
+    let keywords: Vec<&str> = query_lower
+        .split_whitespace()
         .filter(|w| w.len() >= 2)
         .collect();
     if keywords.is_empty() {
@@ -57,7 +58,8 @@ fn find_match_lines(chunk: &Chunk, query: &str) -> Vec<MatchLine> {
 }
 
 fn boost_sibling_chunks(scores: &mut HashMap<usize, f64>, chunks: &[Chunk], query: &str) {
-    let keywords: Vec<String> = query.to_lowercase()
+    let keywords: Vec<String> = query
+        .to_lowercase()
         .split_whitespace()
         .filter(|w| w.len() >= 3)
         .map(String::from)
@@ -81,7 +83,10 @@ fn boost_sibling_chunks(scores: &mut HashMap<usize, f64>, chunks: &[Chunk], quer
 
     for (idx, chunk) in chunks.iter().enumerate() {
         let content_lower = chunk.content.to_lowercase();
-        let match_count = keywords.iter().filter(|kw| content_lower.contains(kw.as_str())).count();
+        let match_count = keywords
+            .iter()
+            .filter(|kw| content_lower.contains(kw.as_str()))
+            .count();
         if match_count == 0 {
             continue;
         }
@@ -106,11 +111,7 @@ fn filter_low_scores(results: Vec<SearchResult>) -> Vec<SearchResult> {
     results.into_iter().filter(|r| r.score >= min).collect()
 }
 
-fn boost_from_graph(
-    scores: &mut HashMap<usize, f64>,
-    chunks: &[Chunk],
-    graph: &DependencyGraph,
-) {
+fn boost_from_graph(scores: &mut HashMap<usize, f64>, chunks: &[Chunk], graph: &DependencyGraph) {
     if scores.is_empty() {
         return;
     }

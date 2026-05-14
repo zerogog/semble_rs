@@ -71,12 +71,12 @@ fn strip_ansi(text: &str) -> String {
 // ---------- detection ----------
 
 static GHA_PREFIX: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^[^\t\n]+\t[^\t\n]+\t\u{feff}?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s?").unwrap()
+    Regex::new(r"^[^\t\n]+\t[^\t\n]+\t\u{feff}?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s?")
+        .unwrap()
 });
 static CARGO_COMPILE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^\s*Compiling \S+ v[\d.]+").unwrap());
-static CARGO_TEST_RUN: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?m)^running \d+ tests?$").unwrap());
+static CARGO_TEST_RUN: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^running \d+ tests?$").unwrap());
 static TSC_PAREN: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^.+\.[jt]sx?\(\d+,\d+\): error TS\d+").unwrap());
 static TSC_COLON: Lazy<Regex> =
@@ -84,8 +84,7 @@ static TSC_COLON: Lazy<Regex> =
 static PNPM_RESOLVED: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^Progress: resolved \d+").unwrap());
 static GO_TEST_RUN: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^=== RUN\s+Test").unwrap());
-static GO_TEST_RESULT: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?m)^---\s+(PASS|FAIL):").unwrap());
+static GO_TEST_RESULT: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^---\s+(PASS|FAIL):").unwrap());
 static GRADLE_TASK: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^> Task :").unwrap());
 static GRADLE_BUILD_LINE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^BUILD (SUCCESSFUL|FAILED)").unwrap());
@@ -100,8 +99,7 @@ static COMPILER_DIAG: Lazy<Regex> = Lazy::new(|| {
 });
 static CMAKE_BUILDING: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^\[\s*\d+%\]\s+(Building|Linking|Generating)").unwrap());
-static SWIFT_BUILD_STEP: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?m)^\[\d+/\d+\]\s+\S+").unwrap());
+static SWIFT_BUILD_STEP: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^\[\d+/\d+\]\s+\S+").unwrap());
 
 pub fn detect(text: &str) -> Format {
     let plain = strip_ansi(text);
@@ -321,12 +319,10 @@ pub fn digest_pnpm(text: &str) -> String {
 
 // ---------- tsc ----------
 
-static TSC_PAREN_PARSE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(.+\.[jt]sx?)\((\d+),(\d+)\): error (TS\d+): (.+)$").unwrap()
-});
-static TSC_COLON_PARSE: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^(.+\.[jt]sx?):(\d+):(\d+) - error (TS\d+): (.+)$").unwrap()
-});
+static TSC_PAREN_PARSE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(.+\.[jt]sx?)\((\d+),(\d+)\): error (TS\d+): (.+)$").unwrap());
+static TSC_COLON_PARSE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^(.+\.[jt]sx?):(\d+):(\d+) - error (TS\d+): (.+)$").unwrap());
 
 pub fn digest_tsc(text: &str) -> String {
     let text = strip_ansi(text);
@@ -421,9 +417,8 @@ pub fn digest_pytest(text: &str) -> String {
 
 // ---------- GitHub Actions / CI ----------
 
-static GHA_BARE_TS: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\u{feff}?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s?").unwrap()
-});
+static GHA_BARE_TS: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\u{feff}?\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z\s?").unwrap());
 static GHA_GROUP_START: Lazy<Regex> = Lazy::new(|| Regex::new(r"##\[group\](.*)$").unwrap());
 static GHA_GROUP_END: Lazy<Regex> = Lazy::new(|| Regex::new(r"##\[endgroup\]").unwrap());
 static GHA_ERROR_MARK: Lazy<Regex> = Lazy::new(|| Regex::new(r"##\[error\]").unwrap());
@@ -457,35 +452,32 @@ pub fn digest_ci(text: &str) -> String {
     let mut group_lines: Vec<String> = Vec::new();
     let mut group_has_error = false;
 
-    let flush_group = |out: &mut Vec<String>,
-                       name: &str,
-                       lines: &[String],
-                       has_error: bool,
-                       still_open: bool| {
-        if has_error {
-            let tail_n = std::cmp::min(CI_FAILED_GROUP_TAIL, lines.len());
-            let start = lines.len() - tail_n;
-            if still_open {
-                out.push(format!(
-                    "━━━ FAILED GROUP: {} (still open, tail {}) ━━━",
-                    name, tail_n
-                ));
+    let flush_group =
+        |out: &mut Vec<String>, name: &str, lines: &[String], has_error: bool, still_open: bool| {
+            if has_error {
+                let tail_n = std::cmp::min(CI_FAILED_GROUP_TAIL, lines.len());
+                let start = lines.len() - tail_n;
+                if still_open {
+                    out.push(format!(
+                        "━━━ FAILED GROUP: {} (still open, tail {}) ━━━",
+                        name, tail_n
+                    ));
+                } else {
+                    out.push(format!(
+                        "━━━ FAILED GROUP: {} ({} lines, tail {}) ━━━",
+                        name,
+                        lines.len(),
+                        tail_n
+                    ));
+                }
+                out.extend(lines[start..].iter().cloned());
+                if !still_open {
+                    out.push(format!("━━━ END {} ━━━", name));
+                }
             } else {
-                out.push(format!(
-                    "━━━ FAILED GROUP: {} ({} lines, tail {}) ━━━",
-                    name,
-                    lines.len(),
-                    tail_n
-                ));
+                out.push(format!("[ok] {} ({} lines)", name, lines.len()));
             }
-            out.extend(lines[start..].iter().cloned());
-            if !still_open {
-                out.push(format!("━━━ END {} ━━━", name));
-            }
-        } else {
-            out.push(format!("[ok] {} ({} lines)", name, lines.len()));
-        }
-    };
+        };
 
     for raw in text.lines() {
         let line = strip_gha_prefix(raw).trim_end();
@@ -505,7 +497,10 @@ pub fn digest_ci(text: &str) -> String {
         }
         if let Some(caps) = GHA_GROUP_START.captures(line) {
             in_group = true;
-            group_name = caps.get(1).map(|m| m.as_str().trim().to_string()).unwrap_or_default();
+            group_name = caps
+                .get(1)
+                .map(|m| m.as_str().trim().to_string())
+                .unwrap_or_default();
             if group_name.is_empty() {
                 group_name = "(unnamed)".to_string();
             }
@@ -563,12 +558,10 @@ static GO_PASS_LINE: Lazy<Regex> =
 static GO_SKIP_LINE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"^---\s+SKIP:\s+\S+\s+\(\S+\)").unwrap());
 // Framework stack frames we collapse to keep the user's frames clear.
-static GO_FRAMEWORK_FRAME: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*(?:testing\.|runtime\.|created by testing\.)").unwrap()
-});
-static GO_FRAMEWORK_PATH: Lazy<Regex> = Lazy::new(|| {
-    Regex::new(r"^\s*/\S*/(?:src/(?:testing|runtime)/)\S+\.go:\d+").unwrap()
-});
+static GO_FRAMEWORK_FRAME: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\s*(?:testing\.|runtime\.|created by testing\.)").unwrap());
+static GO_FRAMEWORK_PATH: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"^\s*/\S*/(?:src/(?:testing|runtime)/)\S+\.go:\d+").unwrap());
 
 pub fn digest_go_test(text: &str) -> String {
     let text = strip_ansi(text);
@@ -730,12 +723,7 @@ pub fn digest_ruff(text: &str) -> String {
 
 // ---------- mypy ----------
 
-static MYPY_INSTALL_PROGRESS: &[&str] = &[
-    "Downloading",
-    "Downloaded",
-    "Installed",
-    "Resolved",
-];
+static MYPY_INSTALL_PROGRESS: &[&str] = &["Downloading", "Downloaded", "Installed", "Resolved"];
 
 pub fn digest_mypy(text: &str) -> String {
     let text = strip_ansi(text);
@@ -756,7 +744,10 @@ pub fn digest_mypy(text: &str) -> String {
         kept.push(line.to_string());
     }
     if install_lines > 0 {
-        kept.insert(0, format!("({} install/progress lines stripped)", install_lines));
+        kept.insert(
+            0,
+            format!("({} install/progress lines stripped)", install_lines),
+        );
     }
     kept.join("\n").trim().to_string()
 }
@@ -767,7 +758,7 @@ pub fn digest_mypy(text: &str) -> String {
 static COMPILER_PROGRESS: Lazy<Vec<Regex>> = Lazy::new(|| {
     [
         r"^\[\s*\d+%\]\s+(Built target|Building|Linking|Generating)",
-        r"^\[\d+/\d+\]\s+\S+",       // swift / ninja-style step
+        r"^\[\d+/\d+\]\s+\S+", // swift / ninja-style step
         r"^make\[\d+\]: Entering directory",
         r"^make\[\d+\]: Leaving directory",
         r"^make\[\d+\]: Nothing to be done",
@@ -782,8 +773,7 @@ static COMPILER_PROGRESS: Lazy<Vec<Regex>> = Lazy::new(|| {
 //   "    4 |     printf(...)"
 //   "      |                ~^"
 // Keep at most 2 such lines per error to retain meaningful context without bloat.
-static COMPILER_CONTEXT_LINE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"^\s*\d+\s*\|").unwrap());
+static COMPILER_CONTEXT_LINE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\s*\d+\s*\|").unwrap());
 static COMPILER_CARET_LINE: Lazy<Regex> = Lazy::new(|| Regex::new(r"^\s+\|.*[\^~]").unwrap());
 
 pub fn digest_compiler(text: &str) -> String {
@@ -827,7 +817,13 @@ pub fn digest_compiler(text: &str) -> String {
     }
 
     if progress_stripped > 0 {
-        kept.insert(0, format!("({} compile/link progress lines stripped)", progress_stripped));
+        kept.insert(
+            0,
+            format!(
+                "({} compile/link progress lines stripped)",
+                progress_stripped
+            ),
+        );
     }
     kept.join("\n").trim().to_string()
 }

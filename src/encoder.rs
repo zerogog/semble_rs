@@ -29,7 +29,9 @@ impl StaticEncoder {
         let name = model_name.unwrap_or(DEFAULT_MODEL_NAME);
         let api = hf_hub::api::sync::Api::new().context("Failed to create HuggingFace Hub API")?;
         let repo = api.model(name.to_string());
-        let tokenizer_path = repo.get("tokenizer.json").context("Failed to download tokenizer.json")?;
+        let tokenizer_path = repo
+            .get("tokenizer.json")
+            .context("Failed to download tokenizer.json")?;
         let model_path = repo
             .get("model.safetensors")
             .context("Failed to download model.safetensors")?;
@@ -49,18 +51,18 @@ impl StaticEncoder {
             .iter()
             .find_map(|name| tensors.tensor(name).ok())
             .or_else(|| {
-                tensor_names
-                    .iter()
-                    .find_map(|name| {
-                        let t = tensors.tensor(name).ok()?;
-                        if t.shape().len() == 2 {
-                            Some(t)
-                        } else {
-                            None
-                        }
-                    })
+                tensor_names.iter().find_map(|name| {
+                    let t = tensors.tensor(name).ok()?;
+                    if t.shape().len() == 2 {
+                        Some(t)
+                    } else {
+                        None
+                    }
+                })
             })
-            .ok_or_else(|| anyhow::anyhow!("No embedding tensor found in model. Tensors: {tensor_names:?}"))?;
+            .ok_or_else(|| {
+                anyhow::anyhow!("No embedding tensor found in model. Tensors: {tensor_names:?}")
+            })?;
 
         let shape = emb.shape();
         if shape.len() != 2 {
@@ -88,8 +90,8 @@ impl StaticEncoder {
             dt => bail!("Unsupported embedding dtype: {dt:?}"),
         };
 
-        let embeddings =
-            Array2::from_shape_vec((vocab_size, dim), embedding_data).context("Failed to reshape embedding tensor")?;
+        let embeddings = Array2::from_shape_vec((vocab_size, dim), embedding_data)
+            .context("Failed to reshape embedding tensor")?;
 
         Ok(Self {
             tokenizer,

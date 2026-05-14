@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use anyhow::{Context, Result, bail};
+use anyhow::{bail, Context, Result};
 
 use crate::bm25::Bm25Index;
 use crate::encoder::{SemanticIndex, StaticEncoder};
@@ -50,13 +50,29 @@ impl SembleIndex {
             None => StaticEncoder::load(None).context("Failed to load embedding model")?,
         };
 
-        let (bm25_index, semantic_index, chunks, graph) =
-            create_index_from_path(&path, &encoder, extensions, ignore, include_text_files, &path)?;
+        let (bm25_index, semantic_index, chunks, graph) = create_index_from_path(
+            &path,
+            &encoder,
+            extensions,
+            ignore,
+            include_text_files,
+            &path,
+        )?;
 
         let file_sizes = compute_file_sizes(&path, &chunks);
         let (file_mapping, language_mapping) = build_mappings(&chunks);
 
-        Ok(Self { encoder, bm25_index, semantic_index, chunks, root: Some(path), file_sizes, file_mapping, language_mapping, graph })
+        Ok(Self {
+            encoder,
+            bm25_index,
+            semantic_index,
+            chunks,
+            root: Some(path),
+            file_sizes,
+            file_mapping,
+            language_mapping,
+            graph,
+        })
     }
 
     pub fn from_git(
@@ -72,7 +88,9 @@ impl SembleIndex {
 
         let mut cmd = Command::new("git");
         cmd.args(["clone", "--depth", "1"]);
-        if let Some(r) = ref_ { cmd.args(["--branch", r]); }
+        if let Some(r) = ref_ {
+            cmd.args(["--branch", r]);
+        }
         cmd.args(["--", url, &tmp_dir.to_string_lossy()]);
         cmd.stdin(std::process::Stdio::null());
         cmd.stdout(std::process::Stdio::null());
@@ -95,18 +113,38 @@ impl SembleIndex {
         };
 
         let resolved = tmp_dir.canonicalize().unwrap_or_else(|_| tmp_dir.clone());
-        let result = create_index_from_path(&resolved, &encoder, extensions, ignore, include_text_files, &resolved);
+        let result = create_index_from_path(
+            &resolved,
+            &encoder,
+            extensions,
+            ignore,
+            include_text_files,
+            &resolved,
+        );
 
         let (bm25_index, semantic_index, chunks, graph) = match result {
             Ok(r) => r,
-            Err(e) => { let _ = std::fs::remove_dir_all(&tmp_dir); return Err(e); }
+            Err(e) => {
+                let _ = std::fs::remove_dir_all(&tmp_dir);
+                return Err(e);
+            }
         };
 
         let file_sizes = compute_file_sizes(&resolved, &chunks);
         let (file_mapping, language_mapping) = build_mappings(&chunks);
         let _ = std::fs::remove_dir_all(&tmp_dir);
 
-        Ok(Self { encoder, bm25_index, semantic_index, chunks, root: None, file_sizes, file_mapping, language_mapping, graph })
+        Ok(Self {
+            encoder,
+            bm25_index,
+            semantic_index,
+            chunks,
+            root: None,
+            file_sizes,
+            file_mapping,
+            language_mapping,
+            graph,
+        })
     }
 
     pub fn search(
@@ -125,8 +163,15 @@ impl SembleIndex {
         let selector_ref = selector.as_deref();
 
         let results = search_hybrid(
-            query, &self.encoder, &self.semantic_index, &self.bm25_index,
-            &self.chunks, top_k, alpha, selector_ref, Some(&self.graph),
+            query,
+            &self.encoder,
+            &self.semantic_index,
+            &self.bm25_index,
+            &self.chunks,
+            top_k,
+            alpha,
+            selector_ref,
+            Some(&self.graph),
         );
 
         save_search_stats(&results, CallType::Search, &self.file_sizes);
@@ -134,7 +179,9 @@ impl SembleIndex {
     }
 
     pub fn find_related(&self, source: &Chunk, top_k: usize) -> Vec<SearchResult> {
-        let selector = source.language.as_ref()
+        let selector = source
+            .language
+            .as_ref()
             .and_then(|lang| self.language_mapping.get(lang))
             .map(|indices| indices.as_slice());
 
@@ -143,7 +190,9 @@ impl SembleIndex {
             Err(_) => return Vec::new(),
         };
 
-        let results = self.semantic_index.query(&query_embedding, top_k + 1, selector);
+        let results = self
+            .semantic_index
+            .query(&query_embedding, top_k + 1, selector);
         let results: Vec<SearchResult> = results
             .into_iter()
             .filter(|&(idx, _)| self.chunks[idx] != *source)
@@ -166,32 +215,56 @@ impl SembleIndex {
                 *language_counts.entry(lang.clone()).or_default() += 1;
             }
         }
-        IndexStats { indexed_files: self.file_mapping.len(), total_chunks: self.chunks.len(), languages: language_counts }
+        IndexStats {
+            indexed_files: self.file_mapping.len(),
+            total_chunks: self.chunks.len(),
+            languages: language_counts,
+        }
     }
 
-    pub fn chunks(&self) -> &[Chunk] { &self.chunks }
-    pub fn graph(&self) -> &DependencyGraph { &self.graph }
+    pub fn chunks(&self) -> &[Chunk] {
+        &self.chunks
+    }
+    pub fn graph(&self) -> &DependencyGraph {
+        &self.graph
+    }
 
-    fn get_selector(&self, filter_languages: Option<&[String]>, filter_paths: Option<&[String]>) -> Option<Vec<usize>> {
+    fn get_selector(
+        &self,
+        filter_languages: Option<&[String]>,
+        filter_paths: Option<&[String]>,
+    ) -> Option<Vec<usize>> {
         let mut indices = Vec::new();
         if let Some(langs) = filter_languages {
             for lang in langs {
-                if let Some(ids) = self.language_mapping.get(lang) { indices.extend(ids); }
+                if let Some(ids) = self.language_mapping.get(lang) {
+                    indices.extend(ids);
+                }
             }
         }
         if let Some(paths) = filter_paths {
             for path in paths {
-                if let Some(ids) = self.file_mapping.get(path) { indices.extend(ids); }
+                if let Some(ids) = self.file_mapping.get(path) {
+                    indices.extend(ids);
+                }
             }
         }
-        if indices.is_empty() { None } else { indices.sort(); indices.dedup(); Some(indices) }
+        if indices.is_empty() {
+            None
+        } else {
+            indices.sort();
+            indices.dedup();
+            Some(indices)
+        }
     }
 }
 
 fn compute_file_sizes(root: &Path, chunks: &[Chunk]) -> HashMap<String, usize> {
     let mut sizes: HashMap<String, usize> = HashMap::new();
     for chunk in chunks {
-        if sizes.contains_key(&chunk.file_path) { continue; }
+        if sizes.contains_key(&chunk.file_path) {
+            continue;
+        }
         if let Ok(content) = std::fs::read_to_string(root.join(&chunk.file_path)) {
             sizes.insert(chunk.file_path.clone(), content.len());
         }
@@ -203,7 +276,10 @@ fn build_mappings(chunks: &[Chunk]) -> (HashMap<String, Vec<usize>>, HashMap<Str
     let mut file_mapping: HashMap<String, Vec<usize>> = HashMap::new();
     let mut language_mapping: HashMap<String, Vec<usize>> = HashMap::new();
     for (i, chunk) in chunks.iter().enumerate() {
-        file_mapping.entry(chunk.file_path.clone()).or_default().push(i);
+        file_mapping
+            .entry(chunk.file_path.clone())
+            .or_default()
+            .push(i);
         if let Some(lang) = &chunk.language {
             language_mapping.entry(lang.clone()).or_default().push(i);
         }

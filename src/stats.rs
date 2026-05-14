@@ -53,10 +53,7 @@ pub fn save_search_stats(
     let snippet_chars: usize = results.iter().map(|r| r.chunk.content.len()).sum();
     let unique_files: std::collections::HashSet<&str> =
         results.iter().map(|r| r.chunk.file_path.as_str()).collect();
-    let file_chars: usize = unique_files
-        .iter()
-        .filter_map(|p| file_sizes.get(*p))
-        .sum();
+    let file_chars: usize = unique_files.iter().filter_map(|p| file_sizes.get(*p)).sum();
 
     let record = StatsRecord {
         ts: Utc::now().timestamp() as f64,

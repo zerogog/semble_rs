@@ -18,40 +18,244 @@ pub struct FileType {
 
 pub fn file_types() -> Vec<(&'static str, FileType)> {
     vec![
-        (".py", FileType { language: "python", category: FileCategory::Code }),
-        (".js", FileType { language: "javascript", category: FileCategory::Code }),
-        (".jsx", FileType { language: "javascript", category: FileCategory::Code }),
-        (".ts", FileType { language: "typescript", category: FileCategory::Code }),
-        (".tsx", FileType { language: "typescript", category: FileCategory::Code }),
-        (".go", FileType { language: "go", category: FileCategory::Code }),
-        (".rs", FileType { language: "rust", category: FileCategory::Code }),
-        (".java", FileType { language: "java", category: FileCategory::Code }),
-        (".kt", FileType { language: "kotlin", category: FileCategory::Code }),
-        (".kts", FileType { language: "kotlin", category: FileCategory::Code }),
-        (".rb", FileType { language: "ruby", category: FileCategory::Code }),
-        (".php", FileType { language: "php", category: FileCategory::Code }),
-        (".c", FileType { language: "c", category: FileCategory::Code }),
-        (".h", FileType { language: "c", category: FileCategory::Code }),
-        (".cpp", FileType { language: "cpp", category: FileCategory::Code }),
-        (".hpp", FileType { language: "cpp", category: FileCategory::Code }),
-        (".cs", FileType { language: "csharp", category: FileCategory::Code }),
-        (".swift", FileType { language: "swift", category: FileCategory::Code }),
-        (".scala", FileType { language: "scala", category: FileCategory::Code }),
-        (".sbt", FileType { language: "scala", category: FileCategory::Code }),
-        (".ex", FileType { language: "elixir", category: FileCategory::Code }),
-        (".exs", FileType { language: "elixir", category: FileCategory::Code }),
-        (".dart", FileType { language: "dart", category: FileCategory::Code }),
-        (".lua", FileType { language: "lua", category: FileCategory::Code }),
-        (".sql", FileType { language: "sql", category: FileCategory::Code }),
-        (".sh", FileType { language: "bash", category: FileCategory::Code }),
-        (".bash", FileType { language: "bash", category: FileCategory::Code }),
-        (".zig", FileType { language: "zig", category: FileCategory::Code }),
-        (".hs", FileType { language: "haskell", category: FileCategory::Code }),
-        (".md", FileType { language: "markdown", category: FileCategory::Document }),
-        (".yaml", FileType { language: "yaml", category: FileCategory::Document }),
-        (".yml", FileType { language: "yaml", category: FileCategory::Document }),
-        (".toml", FileType { language: "toml", category: FileCategory::Document }),
-        (".json", FileType { language: "json", category: FileCategory::Document }),
+        (
+            ".py",
+            FileType {
+                language: "python",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".js",
+            FileType {
+                language: "javascript",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".jsx",
+            FileType {
+                language: "javascript",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".ts",
+            FileType {
+                language: "typescript",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".tsx",
+            FileType {
+                language: "typescript",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".go",
+            FileType {
+                language: "go",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".rs",
+            FileType {
+                language: "rust",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".java",
+            FileType {
+                language: "java",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".kt",
+            FileType {
+                language: "kotlin",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".kts",
+            FileType {
+                language: "kotlin",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".rb",
+            FileType {
+                language: "ruby",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".php",
+            FileType {
+                language: "php",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".c",
+            FileType {
+                language: "c",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".h",
+            FileType {
+                language: "c",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".cpp",
+            FileType {
+                language: "cpp",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".hpp",
+            FileType {
+                language: "cpp",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".cs",
+            FileType {
+                language: "csharp",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".swift",
+            FileType {
+                language: "swift",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".scala",
+            FileType {
+                language: "scala",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".sbt",
+            FileType {
+                language: "scala",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".ex",
+            FileType {
+                language: "elixir",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".exs",
+            FileType {
+                language: "elixir",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".dart",
+            FileType {
+                language: "dart",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".lua",
+            FileType {
+                language: "lua",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".sql",
+            FileType {
+                language: "sql",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".sh",
+            FileType {
+                language: "bash",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".bash",
+            FileType {
+                language: "bash",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".zig",
+            FileType {
+                language: "zig",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".hs",
+            FileType {
+                language: "haskell",
+                category: FileCategory::Code,
+            },
+        ),
+        (
+            ".md",
+            FileType {
+                language: "markdown",
+                category: FileCategory::Document,
+            },
+        ),
+        (
+            ".yaml",
+            FileType {
+                language: "yaml",
+                category: FileCategory::Document,
+            },
+        ),
+        (
+            ".yml",
+            FileType {
+                language: "yaml",
+                category: FileCategory::Document,
+            },
+        ),
+        (
+            ".toml",
+            FileType {
+                language: "toml",
+                category: FileCategory::Document,
+            },
+        ),
+        (
+            ".json",
+            FileType {
+                language: "json",
+                category: FileCategory::Document,
+            },
+        ),
     ]
 }
 
@@ -66,9 +270,23 @@ pub fn language_for_path(path: &Path) -> Option<&'static str> {
 
 pub fn default_ignored_dirs() -> HashSet<String> {
     [
-        ".git", ".hg", ".svn", "__pycache__", "node_modules", ".venv", "venv", ".tox",
-        ".mypy_cache", ".pytest_cache", ".ruff_cache", ".cache", ".semble", ".next", "dist",
-        "build", ".eggs",
+        ".git",
+        ".hg",
+        ".svn",
+        "__pycache__",
+        "node_modules",
+        ".venv",
+        "venv",
+        ".tox",
+        ".mypy_cache",
+        ".pytest_cache",
+        ".ruff_cache",
+        ".cache",
+        ".semble",
+        ".next",
+        "dist",
+        "build",
+        ".eggs",
     ]
     .iter()
     .map(|s| s.to_string())

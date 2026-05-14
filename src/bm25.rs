@@ -79,8 +79,8 @@ impl Bm25Index {
                     }
 
                     let dl = self.doc_lengths[doc_id];
-                    let tf_component =
-                        (tf * (self.k1 + 1.0)) / (tf + self.k1 * (1.0 - self.b + self.b * dl / self.avg_dl));
+                    let tf_component = (tf * (self.k1 + 1.0))
+                        / (tf + self.k1 * (1.0 - self.b + self.b * dl / self.avg_dl));
                     scores[doc_id] += idf * tf_component;
                 }
             }

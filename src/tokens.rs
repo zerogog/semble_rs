@@ -1,8 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 
-static TOKEN_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"[\p{L}_][\p{L}\p{N}_]*").unwrap());
+static TOKEN_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"[\p{L}_][\p{L}\p{N}_]*").unwrap());
 
 fn split_camel_case(token: &str) -> Vec<String> {
     let chars: Vec<char> = token.chars().collect();
@@ -43,7 +42,11 @@ fn split_camel_case(token: &str) -> Vec<String> {
 pub fn split_identifier(token: &str) -> Vec<String> {
     let lower = token.to_lowercase();
     let parts: Vec<String> = if token.contains('_') {
-        lower.split('_').filter(|s| !s.is_empty()).map(String::from).collect()
+        lower
+            .split('_')
+            .filter(|s| !s.is_empty())
+            .map(String::from)
+            .collect()
     } else {
         split_camel_case(token)
     };

@@ -1,5 +1,6 @@
 pub mod bm25;
 pub mod chunking;
+pub mod digest;
 pub mod encoder;
 pub mod file_walker;
 pub mod filter;

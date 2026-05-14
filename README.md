@@ -416,6 +416,11 @@ semble_rs impact src/lib/firestore.ts ./my-project
 # 유사 코드 찾기
 semble_rs find-related src/search.rs 91 .
 
+# 빌드/테스트/CI 출력 압축 (v0.4.0+) — agent 토큰 폭발 영역 잠금
+cargo build 2>&1 | semble_rs digest
+pnpm install 2>&1 | semble_rs digest
+gh run view <id> --log-failed | semble_rs digest  # 3.3MB → 35KB (-98.9%)
+
 # 토큰 절약 통계
 semble_rs savings
 ```
@@ -437,9 +442,51 @@ semble_rs savings
 2. 필요한 청크 식별 후 **`--compact`로 좁혀 탐색** — 매칭 라인 컨텍스트 확인
 3. 본문 자체가 필요하면 **`--json --strip`**
 
+### 빌드 / 테스트 / CI 출력 압축 — `digest` (v0.4.0+)
+
+`semble_rs digest`는 cargo / pnpm / npm / yarn / bun / tsc / pytest / go / gradle / ruff / mypy / clang / cmake / make / swift / GitHub Actions 출력을 자동 감지해서 진행 라인 제거 + 에러 / 실패 컨텍스트 보존으로 압축합니다. agent 세션에서 토큰을 가장 많이 잡아먹는 영역(빌드/CI log)을 잠급니다.
+
+```bash
+# stdin pipe (가장 흔한 사용)
+cargo build 2>&1 | semble_rs digest
+pnpm install 2>&1 | semble_rs digest
+pytest 2>&1 | semble_rs digest
+gh run view <id> --log-failed | semble_rs digest
+
+# 파일 입력
+semble_rs digest ci_log.txt
+
+# 형식 강제 (auto-detect 실패 시)
+semble_rs digest --format ci big_log.txt
+semble_rs digest --format gradle gradle_test.log
+```
+
+#### 측정 결과 (15개 실제 fixture)
+
+| 도구 | raw → digest | 절감 |
+|---|---|---|
+| cargo build (clean) | 7,611 → 59 B | **-99.2%** |
+| cargo test | 3,368 → 369 B | -89.0% |
+| pnpm install | 1,323 → 349 B | -73.6% |
+| tsc errors (13건, 5 codes) | 1,085 → 648 B | -40.3% |
+| pytest 실패 (4건) | 2,762 → 2,330 B | -15.6% |
+| **GitHub Actions log (rust-lang/rust 실패, 실측)** | **3.3 MB → 35 KB** | **-98.9%** ⭐ |
+| go test (panic 포함) | 1,034 → 475 B | -54.1% |
+| gradle test 실패 | 1,232 → 522 B | -57.6% |
+| ruff (9 violations) | 624 → 597 B | -4.3% |
+| mypy | 336 → 237 B | -29.5% |
+| clang/cmake/swift compiler | ~600 → 빌드 진행 라인만 제거 | -3~30% |
+| **TOTAL (15 fixtures)** | **3.33 MB → 43 KB** | **-98.7%** |
+
+#### 핵심 원칙
+- **에러 / 실패는 절대 손실 없음** — file:line:col, traceback, panic stack, 실패 step 모두 보존
+- **진행 라인은 카운트로 압축** — `(45 passing tests stripped)`, `(218 cargo crates stripped)`, `[ok] Setup step (31 lines)`
+- **그룹화** — 같은 에러 코드(`TS2322` 9건 → 상위 3건 + `+6 more`)로 축약
+- **CI 출력의 ##[group] 블록** — 성공은 한 줄로 압축, 실패는 tail 80줄 보존
+
 ### 실험용 모델 교체 (v0.3.0+)
 
-기본 임베딩 모델(`potion-code-16M`)은 코드 검색 + 한글 BM25 hybrid에서 이미 강합니다 — 자체 50쿼리 ground-truth 평가 결과 R@5 **98%**, R@10 **100%**, 한글 R@5 **80%**. 다른 임베딩 모델을 시도하고 싶다면 `SEMBLE_MODEL_PATH` 환경변수로 로컬 model2vec 산출 디렉토리(`tokenizer.json` + `model.safetensors` 필요)를 지정할 수 있습니다.
+기본 임베딩 모델(`potion-code-16M`)은 코드 검색 + 한글 BM25 hybrid에서 이미 강합니다 — 자체 50쿼리 ground-truth 평가 결과 R@5 **96%**, R@10 **100%**, 한글 R@5 **60%**. 다른 임베딩 모델을 시도하고 싶다면 `SEMBLE_MODEL_PATH` 환경변수로 로컬 model2vec 산출 디렉토리(`tokenizer.json` + `model.safetensors` 필요)를 지정할 수 있습니다.
 
 ```bash
 SEMBLE_MODEL_PATH=/path/to/my-distilled-model semble_rs search "query" ./my-project --compact
@@ -915,6 +962,11 @@ semble_rs find-related src/search.rs 91 .
 
 # Cumulative token-savings stats
 semble_rs savings
+
+# Build/test/CI output compression (v0.4.0+) — locks down another agent-token sink
+cargo build 2>&1 | semble_rs digest
+pnpm install 2>&1 | semble_rs digest
+gh run view <id> --log-failed | semble_rs digest    # 3.3MB → 35KB (-98.9%)
 ```
 
 #### Output mode selection guide (v0.2.0+)
@@ -935,9 +987,52 @@ Recommended workflow:
 2. After picking targets, **narrow down with `--compact`** for matching-line context
 3. If the body itself is required, use **`--json --strip`**
 
+### Build / test / CI output compression — `digest` (v0.4.0+)
+
+`semble_rs digest` auto-detects and compresses build/test/install/lint/CI output (cargo, pnpm, npm, yarn, bun, tsc, pytest, go test, gradle, ruff, mypy, clang/gcc, cmake, make, swiftc, GitHub Actions). It strips progress lines while preserving errors, failure context, and summaries — locking down the second-largest agent token sink (after raw file reads).
+
+```bash
+# stdin pipe (most common)
+cargo build 2>&1     | semble_rs digest
+pnpm install 2>&1    | semble_rs digest
+pytest 2>&1          | semble_rs digest
+gh run view <id> --log-failed | semble_rs digest
+
+# file input
+semble_rs digest ci_log.txt
+
+# force format (when auto-detect misses)
+semble_rs digest --format ci big_log.txt
+semble_rs digest --format gradle gradle_test.log
+```
+
+#### Measurements (15 real-world fixtures)
+
+| Tool | raw → digest | Savings |
+|---|---|---|
+| cargo build (clean, 218 crates) | 7,611 → 59 B | **-99.2%** |
+| cargo test (45 passing) | 3,368 → 369 B | -89.0% |
+| pnpm install | 1,323 → 349 B | -73.6% |
+| tsc errors (13 errors, 5 codes) | 1,085 → 648 B | -40.3% |
+| pytest failures (4 failures) | 2,762 → 2,330 B | -15.6% |
+| **GitHub Actions log (rust-lang/rust failed run, real)** | **3.3 MB → 35 KB** | **-98.9%** ⭐ |
+| go test (with panic + stack) | 1,034 → 475 B | -54.1% |
+| gradle test (2 failures) | 1,232 → 522 B | -57.6% |
+| ruff (9 violations, 3 codes) | 624 → 597 B | -4.3% |
+| mypy | 336 → 237 B | -29.5% |
+| clang / cmake / swift compiler | ~600 B (progress stripped only) | -3~30% |
+| **TOTAL (15 fixtures)** | **3.33 MB → 43 KB** | **-98.7%** |
+
+#### Preservation guarantees
+- **Errors and failures are never lost** — file:line:col, traceback, panic stack, failed CI step bodies are all preserved
+- **Progress lines are collapsed to counts** — e.g. `(45 passing tests stripped)`, `(218 cargo crates stripped)`, `[ok] Setup step (31 lines)`
+- **Grouping** — repeated error codes (e.g. `TS2322` x 9 → top 3 + `+6 more`)
+- **CI ##[group] blocks** — successful groups collapse to one line, failed groups keep the trailing 80 lines verbatim
+- **Unknown formats** fall through unchanged
+
 ### Experimental: swap the embedding model (v0.3.0+)
 
-The default embedding model (`potion-code-16M`) is already strong for code search + Korean BM25 hybrid — our 50-query ground-truth eval shows R@5 **98%**, R@10 **100%**, Korean R@5 **80%**. To experiment with a different model, point `SEMBLE_MODEL_PATH` at a local [model2vec](https://github.com/MinishLab/model2vec) output directory containing `tokenizer.json` + `model.safetensors`:
+The default embedding model (`potion-code-16M`) is already strong for code search + Korean BM25 hybrid — our 50-query ground-truth eval shows R@5 **96%**, R@10 **100%**, Korean R@5 **60%**. To experiment with a different model, point `SEMBLE_MODEL_PATH` at a local [model2vec](https://github.com/MinishLab/model2vec) output directory containing `tokenizer.json` + `model.safetensors`:
 
 ```bash
 SEMBLE_MODEL_PATH=/path/to/my-distilled-model semble_rs search "query" ./my-project --compact

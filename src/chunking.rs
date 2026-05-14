@@ -20,6 +20,9 @@ fn get_language(name: &str) -> Option<Language> {
         "c" => tree_sitter_c::LANGUAGE,
         "cpp" => tree_sitter_cpp::LANGUAGE,
         "kotlin" => tree_sitter_kotlin_ng::LANGUAGE,
+        "ruby" => tree_sitter_ruby::LANGUAGE,
+        "php" => tree_sitter_php::LANGUAGE_PHP,
+        "swift" => tree_sitter_swift::LANGUAGE,
         _ => return None,
     };
     Some(Language::from(lang_fn))
@@ -101,6 +104,36 @@ fn is_definition_node(language: &str, node: &Node) -> bool {
                 | "type_alias"
                 | "companion_object"
                 | "secondary_constructor"
+        ),
+        "ruby" => matches!(
+            kind,
+            "method"
+                | "singleton_method"
+                | "class"
+                | "module"
+                | "singleton_class"
+                | "assignment"
+        ),
+        "php" => matches!(
+            kind,
+            "function_definition"
+                | "method_declaration"
+                | "class_declaration"
+                | "interface_declaration"
+                | "trait_declaration"
+                | "enum_declaration"
+                | "namespace_definition"
+        ),
+        "swift" => matches!(
+            kind,
+            "function_declaration"
+                | "class_declaration"
+                | "protocol_declaration"
+                | "extension_declaration"
+                | "enum_declaration"
+                | "struct_declaration"
+                | "property_declaration"
+                | "typealias_declaration"
         ),
         _ => false,
     }
@@ -400,5 +433,90 @@ typealias Name = String
             "first chunk should end at the next top-level definition"
         );
         assert!(chunks[1].content.trim_start().starts_with("class B"));
+    }
+
+    #[test]
+    fn test_ruby_tree_sitter_chunking() {
+        let source = r#"
+class Greeter
+  def initialize(name)
+    @name = name
+  end
+
+  def hello
+    "Hello, #{@name}!"
+  end
+end
+
+module Utils
+  def self.upcase(s)
+    s.upcase
+  end
+end
+
+def standalone
+  42
+end
+"#;
+        let chunks = chunk_source(source, "test.rb", Some("ruby"));
+        assert!(!chunks.is_empty());
+        let all_content: String = chunks.iter().map(|c| c.content.as_str()).collect();
+        assert!(all_content.contains("class Greeter"));
+        assert!(all_content.contains("module Utils"));
+        assert!(all_content.contains("def standalone"));
+    }
+
+    #[test]
+    fn test_php_tree_sitter_chunking() {
+        let source = r#"<?php
+namespace App\Controller;
+
+class UserController {
+    public function index() {
+        return 'list users';
+    }
+
+    public function show(int $id) {
+        return "user $id";
+    }
+}
+
+function helper() {
+    return 1;
+}
+"#;
+        let chunks = chunk_source(source, "test.php", Some("php"));
+        assert!(!chunks.is_empty());
+        let all_content: String = chunks.iter().map(|c| c.content.as_str()).collect();
+        assert!(all_content.contains("class UserController"));
+        assert!(all_content.contains("function helper"));
+    }
+
+    #[test]
+    fn test_swift_tree_sitter_chunking() {
+        let source = r#"
+import Foundation
+
+struct User {
+    let name: String
+    let age: Int
+}
+
+class Greeter {
+    func hello(to user: User) -> String {
+        return "Hello, \(user.name)"
+    }
+}
+
+func standalone() -> Int {
+    return 42
+}
+"#;
+        let chunks = chunk_source(source, "test.swift", Some("swift"));
+        assert!(!chunks.is_empty());
+        let all_content: String = chunks.iter().map(|c| c.content.as_str()).collect();
+        assert!(all_content.contains("struct User"));
+        assert!(all_content.contains("class Greeter"));
+        assert!(all_content.contains("func standalone"));
     }
 }

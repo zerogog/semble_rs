@@ -2,7 +2,7 @@
 
 > **AI 에이전트용 코드 검색 + 빌드/테스트/CI 출력 압축 — Rust로 작성**.하이브리드(BM25 + semantic) 검색으로 `grep`/`cat`/`read`/`ls`를 대체하고, `semble_rs digest`로 3 MB CI log를 35 KB로 압축합니다.
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)![Token savings](https://img.shields.io/badge/agent%20tokens-up%20to%20--98.9%25-brightgreen.svg)![English](https://img.shields.io/badge/English-README.md-blue.svg)---
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)![Token savings](https://img.shields.io/badge/agent%20tokens-up%20to%20--98.9%25-brightgreen.svg)![English](https://img.shields.io/badge/English-README.md-blue.svg)\---
 
 ## 무엇을 하나
 
@@ -14,7 +14,7 @@ AI 에이전트가 토큰을 폭발시키는 두 영역을 모두 잠급니다:
 | 단계 | `semble_rs` 없이 | `semble_rs`로 | 절감 |
 | --- | --- | --- | --- |
 | 코드 찾기 | `ls` → `grep` → `cat 파일₁` → `cat 파일₂` → … | `semble_rs search "auth flow" . --outline` | 불필요한 탐색 읽기 크게 감소 |
-| CI 실패 디버깅 | `gh run view <id> --log-failed` (3.3 MB raw) | `gh run view … | semble_rs digest` (35 KB) | **-98.9%** |
+| CI 실패 디버깅 | `gh run view <id> --log-failed` (3.3 MB raw) | \`gh run view … | semble_rs digest\` (35 KB) |
 
 단일 Rust 바이너리, 런타임 의존성 없음. [MinishLab/semble](https://github.com/MinishLab/semble)의 Rust 재작성 + 의존성 그래프 + AST 청킹 + 한글/CJK 유니코드 검색 + 출력 압축 파이프라인.
 
@@ -69,12 +69,14 @@ gh run view <id> --log-failed | semble_rs digest
 **성능** (실측): 매 실행마다 인덱스를 새로 빌드합니다 (영속 캐시 없음). search/plan 소요 시간:
 
 | 저장소 크기 (코드 파일) | search / plan |
-|---|---|
-| 22개 (이 저장소) | ~0.15 초 |
-| 57–120개 | ~0.3–0.7 초 |
-| 1,600개 | ~10 초 |
+| --- | --- |
+| 22개 (이 저장소) | \~0.15 초 |
+| 57–120개 | \~0.3–0.7 초 |
+| 1,600개 | \~10 초 |
 
 `digest`는 저장소 크기와 무관하며 3.3 MB CI log를 약 20 ms에 처리합니다.
+
+**100쿼리 벤치마크** (v0.5.0, 기본 모델, 이 저장소 대상): **R@5 97%, R@10 100%, MRR 0.84**, 중간값 쿼리당 163ms. 카테고리별 결과와 실패 쿼리 분석은 [`docs/benchmark_100.md`](./docs/benchmark_100.md)에 있습니다. 쿼리 셋은 [`docs/eval_set_100.json`](./docs/eval_set_100.json).
 
 ## `digest` — 빌드 / 테스트 / CI 출력 압축
 

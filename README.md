@@ -97,6 +97,8 @@ For agent sessions, `semble_rs plan "<task>" /path -k 5` can be used before the 
 
 `digest` is independent of repo size and processes a 3.3 MB CI log in ~20 ms.
 
+**100-query benchmark** on this repo (v0.5.0, default model): **R@5 97%, R@10 100%, MRR 0.84**, median 163 ms / query. Per-category breakdown and every miss explained in [`docs/benchmark_100.md`](./docs/benchmark_100.md). The query set is in [`docs/eval_set_100.json`](./docs/eval_set_100.json).
+
 ## `digest` — build / test / CI output
 
 Auto-detects and compresses output from common toolchains. Errors and failures are never lost — only progress lines collapse to counts.

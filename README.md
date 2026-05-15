@@ -4,7 +4,9 @@
 
 &lt;div align="center"&gt;
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg)![Token savings](https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg)![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-README.ko.md-blue.svg)[Quickstart](#quickstart) • [Search](#search) • [Tree](#tree) • [Digest](#digest) • [Deps / Impact](#dependency-graph) • [How it works](#how-it-works) • [Benchmarks](#benchmarks)
+&lt;p&gt; &lt;a href="https://opensource.org/licenses/MIT"&gt;&lt;img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"&gt;&lt;/a&gt; &lt;a href="https://www.rust-lang.org"&gt;&lt;img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust"&gt;&lt;/a&gt; &lt;img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg" alt="Platform"&gt; &lt;a href="#benchmarks"&gt;&lt;img src="https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg" alt="Token savings"&gt;&lt;/a&gt; &lt;a href="./README.ko.md"&gt;&lt;img src="https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-README.ko.md-blue.svg" alt="한국어"&gt;&lt;/a&gt; &lt;/p&gt;
+
+&lt;p&gt; &lt;a href="#quickstart"&gt;Quickstart&lt;/a&gt; • &lt;a href="#search"&gt;Search&lt;/a&gt; • &lt;a href="#tree"&gt;Tree&lt;/a&gt; • &lt;a href="#digest"&gt;Digest&lt;/a&gt; • &lt;a href="#dependency-graph"&gt;Deps / Impact&lt;/a&gt; • &lt;a href="#how-it-works"&gt;How it works&lt;/a&gt; • &lt;a href="#benchmarks"&gt;Benchmarks&lt;/a&gt; &lt;/p&gt;
 
 &lt;/div&gt;
 

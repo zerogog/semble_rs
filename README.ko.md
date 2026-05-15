@@ -1,12 +1,28 @@
-&lt;!-- Keywords: 코드 검색, 시맨틱 코드 검색, AI 에이전트, LLM, BM25, 임베딩, tree-sitter, AST, 의존성 그래프, 영향 분석, Rust, CLI, Claude Code, Codex, Cursor, grep 대체, 토큰 절감, potion-code, model2vec, 하이브리드 검색, RRF, 빌드 출력 압축, CI 로그 압축, 한글 코드 검색, korean code search --&gt;
+<!-- Keywords: 코드 검색, 시맨틱 코드 검색, AI 에이전트, LLM, BM25, 임베딩, tree-sitter, AST, 의존성 그래프, 영향 분석, Rust, CLI, Claude Code, Codex, Cursor, grep 대체, 토큰 절감, potion-code, model2vec, 하이브리드 검색, RRF, 빌드 출력 압축, CI 로그 압축, 한글 코드 검색, korean code search -->
 
-&lt;h2 align="center"&gt; semble_rs&lt;br/&gt; 에이전트를 위한 빠르고 정확한 코드 검색 — Rust로&lt;br/&gt; &lt;sub&gt;grep / cat / read / ls 대체 + 빌드 / CI 출력 압축. 최대 &lt;b&gt;-99%&lt;/b&gt; 토큰.&lt;/sub&gt; &lt;/h2&gt;
+<h2 align="center"> semble_rs<br/> 에이전트를 위한 빠르고 정확한 코드 검색 — Rust로<br/> <sub>grep / cat / read / ls 대체 + 빌드 / CI 출력 압축. 최대 <b>-99%</b> 토큰.</sub> </h2>
 
-&lt;div align="center"&gt;
+<div align="center">
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg)![Token savings](https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg)![English](https://img.shields.io/badge/English-README.md-blue.svg)[빠른 시작](#%EB%B9%A0%EB%A5%B8-%EC%8B%9C%EC%9E%91) • [Search](#search) • [Tree](#tree) • [Digest](#digest) • [Deps / Impact](#%EC%9D%98%EC%A1%B4%EC%84%B1-%EA%B7%B8%EB%9E%98%ED%94%84) • [구조](#%EA%B5%AC%EC%A1%B0) • [벤치마크](#%EB%B2%A4%EC%B9%98%EB%A7%88%ED%81%AC)
+<p>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust"></a>
+  <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg" alt="Platform">
+  <a href="#%EB%B2%A4%EC%B9%98%EB%A7%88%ED%81%AC"><img src="https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg" alt="Token savings"></a>
+  <a href="./README.md"><img src="https://img.shields.io/badge/English-README.md-blue.svg" alt="English"></a>
+</p>
 
-&lt;/div&gt;
+<p>
+  <a href="#%EB%B9%A0%EB%A5%B8-%EC%8B%9C%EC%9E%91">빠른 시작</a> •
+  <a href="#search">Search</a> •
+  <a href="#tree">Tree</a> •
+  <a href="#digest">Digest</a> •
+  <a href="#%EC%9D%98%EC%A1%B4%EC%84%B1-%EA%B7%B8%EB%9E%98%ED%94%84">Deps / Impact</a> •
+  <a href="#%EA%B5%AC%EC%A1%B0">구조</a> •
+  <a href="#%EB%B2%A4%EC%B9%98%EB%A7%88%ED%81%AC">벤치마크</a>
+</p>
+
+</div>
 
 `semble_rs`는 [MinishLab/semble](https://github.com/MinishLab/semble)의 Rust 포팅 + 확장판으로, AI 코딩 에이전트를 위해 설계되었습니다. 에이전트가 필요로 하는 정확한 코드 청크만 반환하고, `ls -R` 대신 토큰이 저렴한 코드베이스 트리를 출력하며, 3 MB CI 로그를 35 KB로 압축합니다. 단일 Rust 바이너리, daemon 없음, API key 없음, GPU 불필요. BM25 + [Model2Vec](https://github.com/MinishLab/model2vec) 정적 임베딩의 하이브리드 검색에 코드 인식 reranking이 더해지고, 의존성 그래프와 AST 청킹, 빌드 / 테스트 / CI 출력을 위한 `digest` 파이프라인을 함께 제공합니다.
 
@@ -203,7 +219,7 @@ gh run view <id> --log-failed | semble_rs digest
 
 융합 후 코드 인식 신호로 reranking:
 
-&lt;details&gt; &lt;summary&gt;&lt;b&gt;Ranking 신호&lt;/b&gt;&lt;/summary&gt;
+<details> <summary><b>Ranking 신호</b></summary>
 
 - **Adaptive weighting.** 심볼형 쿼리 (`Foo::bar`, `_private`, `getUserById`)는 lexical 가중치 ↑, 자연어 쿼리는 시맨틱/lexical 균형 유지.
 - **Definition boosts.** 쿼리한 심볼을 정의하는 청크 (`class`, `def`, `func` 등)가 단순 참조 청크보다 위로.
@@ -213,7 +229,7 @@ gh run view <id> --log-failed | semble_rs digest
 - **Dependency boost.** top hit이 import하는 파일의 청크에 부스트 → call-chain 컨텍스트가 떠오름.
 - **노이즈 페널티.** 테스트 파일, `compat/` / `legacy/` shim, example 코드, `.d.ts` 선언 stub은 down-rank → canonical 구현이 먼저.
 
-&lt;/details&gt;
+</details>
 
 임베더는 완전 정적 (vocab 임베딩 lookup → mean pool → SIF weighting → L2 정규화). 모든 동작이 CPU에서 ms 단위로 완료.
 

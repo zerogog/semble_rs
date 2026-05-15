@@ -4,11 +4,13 @@ use std::process;
 use clap::{Parser, Subcommand};
 
 use semble::digest::{self, Format};
+use semble::encoder::StaticEncoder;
 use semble::filter::smart_strip;
 use semble::index::SembleIndex;
 use semble::outline::extract_signature_near;
 use semble::plan::{build_plan, print_plan};
 use semble::stats::format_savings_report;
+use semble::tree::{render as render_tree, TreeOptions};
 use semble::types::SearchResult;
 use semble::utils::{format_results, is_git_url, resolve_chunk};
 
@@ -49,6 +51,10 @@ enum Commands {
         /// Group results by directory + cap match lines at 3 per chunk
         #[arg(long)]
         group: bool,
+        /// Embedding model (HF repo id or local path).
+        /// Overrides SEMBLE_MODEL_PATH; default: minishlab/potion-code-16M.
+        #[arg(long)]
+        model: Option<String>,
     },
     /// Find code similar to a specific location
     FindRelated {
@@ -68,6 +74,9 @@ enum Commands {
         /// Output as JSON (for agent/tool integration)
         #[arg(long)]
         json: bool,
+        /// Embedding model (HF repo id or local path).
+        #[arg(long)]
+        model: Option<String>,
     },
     /// Show what a file depends on and what symbols it defines
     Deps {
@@ -128,12 +137,47 @@ enum Commands {
         /// Output as JSON
         #[arg(long)]
         json: bool,
+        /// Embedding model (HF repo id or local path).
+        #[arg(long)]
+        model: Option<String>,
     },
     /// Show token savings and usage stats
     Savings {
         /// Show usage breakdown by call type
         #[arg(long)]
         verbose: bool,
+    },
+    /// Print the codebase file tree (gitignore-aware, no `ls -R` token explosion)
+    Tree {
+        /// Local path or git URL (default: current directory)
+        #[arg(default_value = ".")]
+        path: String,
+        /// Show directories only
+        #[arg(short = 'd', long)]
+        dirs_only: bool,
+        /// Limit tree depth
+        #[arg(long)]
+        max_depth: Option<usize>,
+        /// Append top-level symbols (fn, struct, class, enum, ...) per file
+        #[arg(long)]
+        symbols: bool,
+        /// Filter languages (comma-separated, e.g. rust,python)
+        #[arg(long, value_delimiter = ',')]
+        lang: Option<Vec<String>>,
+        /// Also index non-code text files
+        #[arg(long)]
+        include_text_files: bool,
+    },
+    /// Encode text to a Model2Vec embedding vector (JSON output)
+    Encode {
+        /// Text to encode. If omitted, reads sentences from --file or stdin (one per line).
+        text: Option<String>,
+        /// Read sentences from a file (one per line).
+        #[arg(long)]
+        file: Option<String>,
+        /// Override SEMBLE_MODEL_PATH / default model (HF repo id or local path).
+        #[arg(long)]
+        model: Option<String>,
     },
     /// Compress build/test/install/CI output (cargo, pnpm, tsc, pytest, GitHub Actions)
     Digest {
@@ -154,6 +198,72 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
+        Commands::Tree {
+            path,
+            dirs_only,
+            max_depth,
+            symbols,
+            lang,
+            include_text_files,
+        } => {
+            let index = build_index(&path, include_text_files, None);
+            let opts = TreeOptions {
+                dirs_only,
+                max_depth,
+                symbols,
+                langs: lang.as_deref(),
+            };
+            let out = render_tree(index.chunks(), index.graph(), &opts);
+            print!("{out}");
+        }
+        Commands::Encode { text, file, model } => {
+            let encoder = StaticEncoder::load(model.as_deref()).unwrap_or_else(|e| {
+                eprintln!("Failed to load model: {e}");
+                process::exit(1);
+            });
+            let inputs: Vec<String> = if let Some(t) = text {
+                vec![t]
+            } else {
+                let buf = if let Some(f) = file {
+                    std::fs::read_to_string(&f).unwrap_or_else(|e| {
+                        eprintln!("Error reading {f}: {e}");
+                        process::exit(1);
+                    })
+                } else {
+                    let mut s = String::new();
+                    if let Err(e) = std::io::stdin().read_to_string(&mut s) {
+                        eprintln!("Error reading stdin: {e}");
+                        process::exit(1);
+                    }
+                    s
+                };
+                let lines: Vec<String> = buf
+                    .lines()
+                    .filter(|l| !l.trim().is_empty())
+                    .map(|s| s.to_string())
+                    .collect();
+                if lines.is_empty() {
+                    eprintln!("No input text.");
+                    process::exit(1);
+                }
+                lines
+            };
+            let arr = encoder.encode_batch(&inputs).unwrap_or_else(|e| {
+                eprintln!("Encoding failed: {e}");
+                process::exit(1);
+            });
+            let rows: Vec<Vec<f32>> = arr.outer_iter().map(|r| r.to_vec()).collect();
+            let json = if rows.len() == 1 {
+                serde_json::to_string(&rows[0])
+            } else {
+                serde_json::to_string(&rows)
+            }
+            .unwrap_or_else(|e| {
+                eprintln!("Serialization failed: {e}");
+                process::exit(1);
+            });
+            println!("{json}");
+        }
         Commands::Digest {
             file,
             format,
@@ -225,7 +335,7 @@ fn main() {
             json,
             dot,
         } => {
-            let index = build_index(&path, false);
+            let index = build_index(&path, false, None);
             let graph = index.graph();
 
             if dot {
@@ -290,7 +400,7 @@ fn main() {
             json,
             dot,
         } => {
-            let index = build_index(&path, false);
+            let index = build_index(&path, false, None);
             let graph = index.graph();
 
             if dot {
@@ -320,8 +430,9 @@ fn main() {
             top_k,
             include_text_files,
             json,
+            model,
         } => {
-            let index = build_index(&path, include_text_files);
+            let index = build_index(&path, include_text_files, model.as_deref());
             let results = index.search(task.as_str(), top_k, None, None, None);
             let report = build_plan(&task, &path, top_k, &results);
 
@@ -344,8 +455,9 @@ fn main() {
             strip,
             outline,
             group,
+            model,
         } => {
-            let index = build_index(&path, include_text_files);
+            let index = build_index(&path, include_text_files, model.as_deref());
 
             let results = index.search(query.as_str(), top_k, None, None, None);
             if outline {
@@ -374,8 +486,9 @@ fn main() {
             top_k,
             include_text_files,
             json,
+            model,
         } => {
-            let index = build_index(&path, include_text_files);
+            let index = build_index(&path, include_text_files, model.as_deref());
 
             let chunk = match resolve_chunk(index.chunks(), &file_path, line) {
                 Some(c) => c.clone(),
@@ -522,11 +635,17 @@ fn print_json(results: &[SearchResult]) {
     );
 }
 
-fn build_index(path: &str, include_text_files: bool) -> SembleIndex {
+fn build_index(path: &str, include_text_files: bool, model: Option<&str>) -> SembleIndex {
+    let encoder = model.map(|m| {
+        StaticEncoder::load(Some(m)).unwrap_or_else(|e| {
+            eprintln!("Failed to load model {m:?}: {e}");
+            process::exit(1);
+        })
+    });
     let result = if is_git_url(path) {
-        SembleIndex::from_git(path, None, None, None, None, include_text_files)
+        SembleIndex::from_git(path, None, encoder, None, None, include_text_files)
     } else {
-        SembleIndex::from_path(path, None, None, None, include_text_files)
+        SembleIndex::from_path(path, encoder, None, None, include_text_files)
     };
 
     match result {

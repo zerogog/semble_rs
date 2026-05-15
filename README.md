@@ -1,218 +1,292 @@
-<!--
-Keywords: code search, semantic code search, AI agent, LLM, BM25, embeddings,
-          tree-sitter, AST, dependency graph, impact analysis, Rust, CLI,
-          Claude Code, Codex, Cursor, grep replacement, token reduction,
-          potion-code, model2vec, hybrid search, RRF, build output digest,
-          CI log compression, korean code search, 한글 코드 검색
--->
+&lt;!-- Keywords: code search, semantic code search, AI agent, LLM, BM25, embeddings, tree-sitter, AST, dependency graph, impact analysis, Rust, CLI, Claude Code, Codex, Cursor, grep replacement, token reduction, potion-code, model2vec, hybrid search, RRF, build output digest, CI log compression, korean code search, 한글 코드 검색 --&gt;
 
-# semble_rs
+&lt;h2 align="center"&gt; semble_rs&lt;br/&gt; Fast and Accurate Code Search for Agents — in Rust&lt;br/&gt; &lt;sub&gt;Replaces grep / cat / read / ls and compresses build & CI output. Up to &lt;b&gt;-99%&lt;/b&gt; tokens.&lt;/sub&gt; &lt;/h2&gt;
 
-> **Fast, AI-agent-native code search + build/test/CI output compression — written in Rust.**
-> One hybrid (BM25 + semantic) search replaces `grep`/`cat`/`read`/`ls`;
-> `semble_rs digest` collapses 3 MB CI logs into 35 KB.
+&lt;div align="center"&gt;
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg)](#installation)
-[![Token savings](https://img.shields.io/badge/agent%20tokens-up%20to%20--98.9%25-brightgreen.svg)](#digest--buildtestci-output)
-[![한국어](https://img.shields.io/badge/한국어-README.ko.md-blue.svg)](./README.ko.md)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg)![Token savings](https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg)![한국어](https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-README.ko.md-blue.svg)[Quickstart](#quickstart) • [Search](#search) • [Tree](#tree) • [Digest](#digest) • [Deps / Impact](#dependency-graph) • [How it works](#how-it-works) • [Benchmarks](#benchmarks)
 
-**Keywords:** AI code search · LLM agent tools · grep/cat replacement · BM25 + embeddings · Tree-sitter AST · build / CI log compression · Rust CLI · Claude Code · Codex · Cursor · 한글 코드 검색
+&lt;/div&gt;
 
-한국어 사용자는 [README.ko.md](./README.ko.md)를 참고하세요.
+`semble_rs` is a Rust port and superset of [MinishLab/semble](https://github.com/MinishLab/semble) built for AI coding agents. It returns the exact code chunks an agent needs, prints a token-cheap codebase tree instead of `ls -R`, and compresses 3 MB CI logs into 35 KB. One single binary, no daemon, no API keys, no GPU. Hybrid BM25 + [Model2Vec](https://github.com/MinishLab/model2vec) static embeddings with code-aware reranking, plus a dependency graph, AST chunking, and a `digest` pipeline for build / test / CI output.
 
----
-
-## What it does
-
-AI agents burn tokens two ways:
-1. **Exploring code** — repeated `grep` → `cat` → `read` reads megabytes of irrelevant content.
-2. **Reading build / CI output** — `cargo build`, `pnpm install`, `gh run view --log` dump tens of KB to MB of progress noise.
-
-`semble_rs` collapses both:
-
-| Stage | Without `semble_rs` | With `semble_rs` | Savings |
-|---|---|---|---|
-| Code lookup | `ls` → `grep` → `cat file₁` → `cat file₂` → … | `semble_rs search "auth flow" . --outline` | large reduction in exploratory reads |
-| CI failure debug | `gh run view <id> --log-failed` (3.3 MB raw) | `gh run view … \| semble_rs digest` (35 KB) | **-98.9%** |
-
-It is a single Rust binary, no runtime dependencies, with a Rust rewrite of [MinishLab/semble](https://github.com/MinishLab/semble) at its core plus dependency graphs, AST chunking, Korean/CJK Unicode search, and an output-digest pipeline.
-
-## Installation
+## Quickstart
 
 ```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+# Install Rust if needed, then:
 git clone https://github.com/johunsang/semble_rs.git && cd semble_rs
 cargo install --path .
 ```
 
-The binary lands at `~/.cargo/bin/semble_rs`. On first run, the default embedding model `minishlab/potion-code-16M` (~60 MB) is downloaded from HuggingFace.
-
-## Quick start
+The binary lands at `~/.cargo/bin/semble_rs`. On first run, the default embedding model `minishlab/potion-code-16M` (\~60 MB) is downloaded from HuggingFace.
 
 ```bash
-# Code search (replaces grep / cat / read / ls)
-semble_rs plan "fix auth flow bug" ./my-project -k 5       # optional: recommend a minimal exploration flow
-semble_rs search "auth flow" ./my-project --outline      # pass 1: structural overview
-semble_rs search "loginWithEmail" ./my-project --compact # pass 2: matching lines
+# Map the codebase (replaces ls -R)
+semble_rs tree ./my-project --symbols
 
-# Dependencies and change-impact
-semble_rs deps   src/lib/auth.ts ./my-project
-semble_rs impact src/lib/auth.ts ./my-project
+# Find code by what it does (replaces grep + cat)
+semble_rs search "how is auth handled" ./my-project --outline
 
-# Build / test / CI output compression
-cargo build 2>&1     | semble_rs digest
-pnpm install 2>&1    | semble_rs digest
+# Compress build / CI output before reading it
+cargo build 2>&1 | semble_rs digest
 gh run view <id> --log-failed | semble_rs digest
 ```
 
-## Search — output modes
+For agent integration (Claude Code, Codex, Cursor), see [Agent integration](#agent-integration).
+
+## Main Features
+
+- **Fast**: indexes the local repo (22 files) in \~150 ms, \~10 s on 1,600 files. Static embedder — no transformer forward pass at query time.
+- **Token-efficient**: `tree` collapses `ls -R` by **4×–747×**; `--outline` is **-47%** vs full output; `digest` reaches **-98.9%** on real GitHub Actions logs.
+- **Hybrid retrieval**: BM25 + Model2Vec embeddings fused with RRF, then reranked with definition / identifier-stem / file-coherence boosts and noise penalties.
+- **Dependency graph**: `deps` / `impact` show what a file imports, defines, and what changes if you touch it. Optional Graphviz `--dot` output.
+- **Build / CI compression**: `digest` auto-detects cargo, pnpm/npm/yarn/bun, tsc, pytest, go test, gradle, ruff, mypy, clang/gcc/cmake/make/swiftc, GitHub Actions.
+- **Single binary**: no Python, no daemon, no API keys. Runs on CPU.
+
+## Search
+
+```bash
+semble_rs search "auth flow" ./my-project --outline    # pass 1: structural overview
+semble_rs search "loginWithEmail" ./my-project --compact   # pass 2: matching lines
+semble_rs search "save model" https://github.com/MinishLab/model2vec   # git URL
+```
+
+`path` defaults to the current directory; git URLs are accepted (cloned shallow).
+
+### Output modes
 
 | Mode | Output | Token cost vs `--compact` | When to use |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `--outline` | One signature line per chunk | **-47%** | First-pass structural scan |
-| `--group` | Directory grouping + match lines capped at 3 (`+N` overflow) | -47% | Many match lines per chunk |
+| `--group` | Directory grouping + match lines capped at 3 (`+N` overflow) | \-47% | Many match lines per chunk |
 | `--compact` | Score + path + every matching line | baseline | Precision scan |
 | `--json --strip` | Chunk bodies (comments stripped) | +800% | Tooling / pipeline integration |
 | `--json` | Chunk bodies (raw) | +900% | Tooling / pipeline integration |
 
 **Recommended:** `--outline` to overview → `--compact` to narrow → `--json --strip` only if the chunk body itself is needed.
 
-For agent sessions, `semble_rs plan "<task>" /path -k 5` can be used before the first search. It runs a small search, ranks likely files/chunks, and prints the next `--outline`, `--group`, `--compact`, `deps`, and `impact` commands so the agent does not wander into full-file reads.
+### `find-related`
 
-`plan` is a guardrail, not an oracle: it is useful for ambiguous tasks, new repositories, and “where should I start?” moments. If it reports low confidence, treat candidates as leads and broaden the natural-language query. If you already know the feature or symbol, go straight to `search --outline` / `search --compact`.
-
-**Savings note:** individual commands are measured directly (`--outline` is often much smaller than default search output, and `digest` reaches 98.9% on the GitHub Actions fixture above). Whole-session savings depend on whether the agent actually avoids full-file reads and raw logs, so they should be benchmarked per workflow rather than quoted as a fixed number.
-
-`--outline` accuracy on the 33-query self-benchmark: **100% well-formed** signatures (parens balanced, no truncation).
-
-**Performance** (measured): the index is rebuilt every run (no persistent cache). Search and `plan` complete in roughly:
-
-| Repo size (code files) | search / plan |
-|---|---|
-| 22 (this repo) | ~0.15 s |
-| 57–120 | ~0.3–0.7 s |
-| 1,600 | ~10 s |
-
-`digest` is independent of repo size and processes a 3.3 MB CI log in ~20 ms.
-
-**100-query benchmark** on this repo (v0.5.0, default model): **R@5 97%, R@10 100%, MRR 0.84**, median 163 ms / query. Per-category breakdown and every miss explained in [`docs/benchmark_100.md`](./docs/benchmark_100.md). The query set is in [`docs/eval_set_100.json`](./docs/eval_set_100.json).
-
-## `digest` — build / test / CI output
-
-Auto-detects and compresses output from common toolchains. Errors and failures are never lost — only progress lines collapse to counts.
-
-**Supported handlers:** `cargo`, `pnpm`/`npm`/`yarn`/`bun`, `tsc`, `pytest`, `go test`, `gradle`, `ruff`, `mypy`, `clang`/`gcc`/`cmake`/`make`/`swiftc` (`compiler`), GitHub Actions (`ci`). Unknown formats pass through unchanged.
-
-Measurements on 15 real-world fixtures:
-
-| Fixture | Raw → digest | Savings |
-|---|---|---|
-| `cargo build` (clean, 218 crates) | 7,611 B → 59 B | **-99.2%** |
-| `cargo test` (45 passing) | 3,368 B → 369 B | -89.0% |
-| `pnpm install` | 1,323 B → 349 B | -73.6% |
-| `tsc` (13 errors, 5 codes) | 1,085 B → 648 B | -40.3% |
-| `pytest` (4 failures) | 2,762 B → 2,330 B | -15.6% |
-| **GitHub Actions log (rust-lang/rust failed CI, real)** | **3.3 MB → 35 KB** | **-98.9%** ⭐ |
-| `go test` (with panic + stack) | 1,034 B → 475 B | -54.1% |
-| `gradle test` (2 failures) | 1,232 B → 522 B | -57.6% |
-| `ruff` (9 violations, 3 codes) | 624 B → 597 B | -4.3% |
-| `mypy` | 336 B → 237 B | -29.5% |
-| `clang`/`cmake`/`swift` compilers | ~600 B (progress stripped) | -3 ~ -30% |
-| **TOTAL (15 fixtures)** | **3.33 MB → 43 KB** | **-98.7%** |
+Given a `file:line` from a previous search result, returns chunks semantically similar to that location.
 
 ```bash
-# Force a specific handler when auto-detect misses
-semble_rs digest --format ci  ci_log.txt
-semble_rs digest --format gradle gradle_test.log
-
-# Inspect which handler was picked
-semble_rs digest --show-format my_log.txt
+semble_rs find-related src/auth.rs 42 ./my-project
 ```
 
-**Preservation guarantees**
-- File:line:col, traceback, panic stack, failed-step bodies are always kept.
-- Repeated error codes are grouped (e.g. `TS2322` × 9 → top 3 + `+6 more`).
-- CI `##[group]` blocks: successful groups collapse to one line; failed groups keep their trailing 80 lines verbatim.
+### `plan`
 
-## How does `semble_rs` compare to existing tools?
+When the agent doesn't know where to start, `plan` runs a small search and prints a recommended sequence of `--outline` / `--group` / `--compact` / `deps` / `impact` commands.
 
-| Need | `ripgrep` | `ast-grep` | IDE/agent built-in search (Cursor, etc.) | **`semble_rs`** |
-|---|---|---|---|---|
-| Exact symbol / regex grep | **★ fastest** | ✓ via patterns | ✓ | ✓ (hybrid) |
-| Natural-language query ("where do we strip ANSI") | ✗ | ✗ | partial | **★** |
-| AST structural patterns (`fn $name($$$)`) | ✗ | **★** | ✗ | wraps ast-grep via `find-pattern` |
-| Dependency graph + impact analysis | ✗ | ✗ | partial | **★** |
-| Build / CI log compression | ✗ | ✗ | ✗ | **★ `digest`** |
-| Single binary, no daemon | ✓ | ✓ | ✗ (IDE bound) | ✓ |
-| Korean / CJK indexing | ✓ (byte grep) | partial | varies | ✓ (Unicode BM25) |
+```bash
+semble_rs plan "fix auth flow bug" ./my-project -k 5
+```
 
-`semble_rs` is not a replacement for `ripgrep` when you already know the exact symbol — `ripgrep` is unbeatably fast at raw text. It is a replacement for **the pattern of "agent runs grep → reads several files → repeats"** by collapsing that loop into one hybrid-search call, and adds:
+`plan` is a guardrail, not an oracle: low-confidence candidates are leads, not facts. Skip it when the symbol or feature name is already known.
 
-- **`digest`** — collapses 3 MB CI logs to 35 KB (no other tool does this in a generic way),
-- **`deps` / `impact`** — file-level dependency graph with `--dot` Graphviz output (use `… --dot | dot -Tpng > graph.png`),
-- **`plan`** — recommends a token-efficient exploration flow when the agent doesn't know where to start,
-- **`find-pattern`** — thin wrapper around `ast-grep` for structural queries (requires `ast-grep` installed).
+### `--model`
 
-Use **`ripgrep`** when you have the exact symbol and just want to list call sites. Use **`ast-grep`** (or `semble_rs find-pattern`) when you need a structural code rewrite. Use **`semble_rs`** when the agent is exploring, the symbol name is unknown, or you want CI/build logs compressed.
+All search-side commands accept `--model <hf-repo-or-local-path>` to override the default embedder. Also honours the `SEMBLE_MODEL_PATH` environment variable.
 
-## Supported languages (search)
+## Tree
+
+`semble_rs tree` prints the codebase file tree using the same gitignore-aware index as `search`. It exists because `ls -R` on a real project explodes into tens or hundreds of thousands of tokens (`.git/`, `target/`, `node_modules/` all included). Measured on real repos:
+
+| Project | `semble_rs tree` | `ls -R` | Reduction |
+| --- | --- | --- | --- |
+| this repo (Rust + `target/`) | **533 B** | 398,101 B | **747×** |
+| 6,693-file Python backend | **3,950 B** | 254,066 B | **64×** |
+| 325-file ML training repo | 838 B | 7,522 B | 9× |
+
+```bash
+semble_rs tree                              # current directory
+semble_rs tree -d                           # directories only
+semble_rs tree --max-depth 2                # cap depth
+semble_rs tree --symbols                    # append top-level symbols per file
+semble_rs tree --lang rust,python           # filter by language
+```
+
+## Digest
+
+`semble_rs digest` collapses build / test / install / CI output. Errors, file:line:col, tracebacks, panic stacks, and failed-step bodies are always preserved — only progress lines collapse to counts.
+
+```bash
+cargo build 2>&1            | semble_rs digest
+pnpm install 2>&1           | semble_rs digest
+pytest 2>&1                 | semble_rs digest
+gh run view <id> --log-failed | semble_rs digest
+```
+
+Measured on 15 real-world fixtures:
+
+| Fixture | Raw → digest | Savings |
+| --- | --- | --- |
+| `cargo build` (clean, 218 crates) | 7,611 B → 59 B | **-99.2%** |
+| `cargo test` (45 passing) | 3,368 B → 369 B | \-89.0% |
+| `pnpm install` | 1,323 B → 349 B | \-73.6% |
+| `tsc` (13 errors, 5 codes) | 1,085 B → 648 B | \-40.3% |
+| `pytest` (4 failures) | 2,762 B → 2,330 B | \-15.6% |
+| **GitHub Actions log (rust-lang/rust failed CI, real)** | **3.3 MB → 35 KB** | **-98.9%** ⭐ |
+| `go test` (with panic + stack) | 1,034 B → 475 B | \-54.1% |
+| `gradle test` (2 failures) | 1,232 B → 522 B | \-57.6% |
+| `ruff` / `mypy` / `clang` / `cmake` / `swift` | varies | \-3% to -30% |
+| **TOTAL (15 fixtures)** | **3.33 MB → 43 KB** | **-98.7%** |
+
+Auto-detection covers cargo, pnpm/npm/yarn/bun, tsc, pytest, go test, gradle, ruff, mypy, clang/gcc/cmake/make/swiftc, GitHub Actions. Force a handler with `--format <name>`; inspect with `--show-format`.
+
+## Dependency graph
+
+```bash
+semble_rs deps   src/auth.rs ./my-project           # what this file imports / defines
+semble_rs deps   src/auth.rs ./my-project --dot | dot -Tpng > deps.png
+semble_rs impact src/auth.rs ./my-project           # transitive: what breaks if I touch it
+semble_rs impact src/auth.rs ./my-project --dot | dot -Tpng > impact.png
+```
+
+`impact` is intended to be run before edits to a shared module to avoid surprises.
+
+### `find-pattern`
+
+Thin wrapper around `ast-grep` for structural queries that semantic search can't express:
+
+```bash
+semble_rs find-pattern 'fn $name($$$)' . --lang rust --compact
+```
+
+Requires `ast-grep` installed (`brew install ast-grep` or `cargo install ast-grep`).
+
+## Encode
+
+`semble_rs encode` exposes the embedding model as a CLI for scripting and debugging:
+
+```bash
+semble_rs encode "search result scoring"            # one vector → JSON array
+echo -e "auth\nlogin\ntoken" | semble_rs encode     # stdin, one sentence per line
+semble_rs encode "x" --model minishlab/potion-multilingual-128M
+```
+
+## Agent integration
+
+Append a snippet like the following to your project-root `CLAUDE.md` or `AGENTS.md`. It works for Claude Code, Codex, Cursor (`.cursorrules`), Aider, and OpenHands.
+
+```markdown
+## Code search and exploration
+
+Use `semble_rs` instead of `ls -R`, `grep`, `cat`:
+
+​```bash
+semble_rs tree . --symbols                         # codebase map (cheap)
+semble_rs search "<feature or symbol>" . --outline # pass 1
+semble_rs search "<feature or symbol>" . --compact # pass 2
+semble_rs deps   <file> .                          # what file imports / defines
+semble_rs impact <file> .                          # files affected by changes
+​```
+
+Compress noisy command output before reading it:
+
+​```bash
+cargo build 2>&1 | semble_rs digest
+pnpm install 2>&1 | semble_rs digest
+gh run view <id> --log-failed | semble_rs digest
+​```
+```
+
+`semble_rs savings` shows estimated tokens saved across past searches.
+
+## How it works
+
+`semble_rs` chunks every file with `tree-sitter` at function / class / module boundaries (line-based fallback for unsupported languages), then scores every query with two complementary retrievers: static [Model2Vec](https://github.com/MinishLab/model2vec) embeddings (default `minishlab/potion-code-16M`) for semantic similarity, and BM25 for lexical matches on identifiers and API names. Score lists are fused with Reciprocal Rank Fusion.
+
+After fusion, results are reranked with code-aware signals:
+
+&lt;details&gt; &lt;summary&gt;&lt;b&gt;Ranking signals&lt;/b&gt;&lt;/summary&gt;
+
+- **Adaptive weighting.** Symbol-like queries (`Foo::bar`, `_private`, `getUserById`) get more lexical weight; natural-language queries stay balanced.
+- **Definition boosts.** Chunks that define the queried symbol (a `class`, `def`, `func`, etc.) outrank chunks that merely reference it.
+- **Identifier stems.** Query tokens are stemmed and matched against identifier stems. Querying `parse config` boosts chunks containing `parseConfig`, `ConfigParser`, or `config_parser`.
+- **File coherence.** When multiple chunks of a file match, the file is boosted so the top result reflects file-level relevance.
+- **Sibling-chunk boost.** Chunks adjacent to a top hit get a small boost — definitions and their helpers usually cluster.
+- **Dependency boost.** Chunks in files imported by a top hit get boosted so call-chain context surfaces.
+- **Noise penalties.** Test files, `compat/` / `legacy/` shims, example code, and `.d.ts` declaration stubs are down-ranked so canonical implementations surface first.
+
+&lt;/details&gt;
+
+The embedder is fully static (vocab embedding lookup → mean pool → SIF weighting → L2 normalize). All of this runs in milliseconds on CPU.
+
+## Benchmarks
+
+### Retrieval quality — 100-query benchmark (this repo)
+
+100 hand-labelled queries across 5 categories: exact symbol names, natural-language feature descriptions, scenarios, acronyms, and Korean queries. Default model `minishlab/potion-code-16M`.
+
+| Metric | Score |
+| --- | --- |
+| Recall@1 | 70% |
+| Recall@5 | 90% |
+| Recall@10 | 95% |
+| MRR | 0.78 |
+| Median latency | 150 ms / query (cold) |
+
+| Category | n | R@1 | R@5 | R@10 | MRR |
+| --- | --- | --- | --- | --- | --- |
+| exact_symbol | 30 | 93% | 100% | 100% | 0.96 |
+| nl_feature | 40 | 75% | 98% | 100% | 0.83 |
+| scenario | 10 | 70% | 100% | 100% | 0.77 |
+| acronym | 10 | 50% | 70% | 70% | 0.56 |
+| korean | 10 | 10% | 60% | 80% | 0.27 |
+
+Query set: `docs/eval_set_100.json` · per-miss analysis: `docs/benchmark_100.md`.
+
+### Indexing and query latency by repo size
+
+The index is rebuilt every run (no persistent cache).
+
+| Repo size (code files) | Indexing + first query |
+| --- | --- |
+| 22 (this repo) | **\~0.15 s** |
+| 57–120 | \~0.3–0.7 s |
+| 1,600 | \~10 s |
+
+`digest` is independent of repo size: 3.3 MB CI log → 35 KB in **\~20 ms**.
+
+### Token efficiency vs native shell tools
+
+Measured on real projects:
+
+| Operation | `semble_rs` | Native | Reduction |
+| --- | --- | --- | --- |
+| **Codebase map** (this repo) | `tree` **533 B** | `ls -R` 398 KB | **747×** |
+| **Codebase map** (6,693-file Python backend) | `tree` **3,950 B** | `ls -R` 254 KB | **64×** |
+| **Codebase map** (325-file Python repo) | `tree` 838 B | `ls -R` 7,522 B | 9× |
+| **Code chunk lookup** (`--outline` vs `--compact`) | \-47% | baseline | \-47% |
+| **Build log** (`cargo build` clean) | `digest` 59 B | raw 7,611 B | **-99.2%** |
+| **CI failure log** (real GitHub Actions, rust-lang/rust) | `digest` 35 KB | raw 3.3 MB | **-98.9%** ⭐ |
+| **15-fixture aggregate** | `digest` 43 KB | raw 3.33 MB | **-98.7%** |
+
+> Agents using `grep + cat + ls -R` spend most of their context window on irrelevant code and noise. `semble_rs` returns only what matters and compresses the rest.
+
+## Supported languages
 
 | Language | Search | AST chunking | Dependency graph |
 | --- | --- | --- | --- |
 | Rust | ✓ | ✓ | ✓ |
 | Python | ✓ | ✓ | ✓ |
-| JavaScript | ✓ | ✓ | ✓ |
-| TypeScript | ✓ | ✓ | ✓ |
+| JavaScript / TypeScript | ✓ | ✓ | ✓ |
 | Go | ✓ | ✓ | ✓ |
 | Java | ✓ | ✓ | ✓ |
 | C / C++ | ✓ | ✓ | ✓ |
-| **Kotlin** (v0.3.0+) | ✓ | ✓ | ✓ |
-| **Ruby, PHP, Swift** (v0.8.0+) | ✓ | ✓ | ✓ |
-| Other code files (HTML, CSS, SCSS, Vue, Svelte, ...) | ✓ | line-based fallback | — |
-
-## Integration with AI coding agents
-
-### Global `CLAUDE.md` (Claude Code) and `AGENTS.md` (Codex)
-
-Drop a section like the following into `~/.claude/CLAUDE.md` and `~/.codex/AGENTS.md`:
-
-```markdown
-# semble_rs — replaces grep, cat, read, ls + compresses build/CI output
-
-ALWAYS use these instead of raw grep/cat/find/read:
-
-  semble_rs plan   "<task>"    /path             # optional 0: plan + candidate files
-  semble_rs search "<feature>" /path --outline      # 1단계 탐색
-  semble_rs search "<symbol>"  /path --compact      # 2단계 정밀 탐색
-  semble_rs deps   <file>      /path
-  semble_rs impact <file>      /path
-
-ALWAYS pipe build / test / CI output through `semble_rs digest`:
-
-  cargo build 2>&1   | semble_rs digest
-  pnpm install 2>&1  | semble_rs digest
-  pytest 2>&1        | semble_rs digest
-  gradle test 2>&1   | semble_rs digest
-  gh run view <id> --log-failed | semble_rs digest
-
-Rules: never guess symbol names (use natural-language descriptions instead),
-always pass a directory path (not a file path), and only fall back to `grep`
-when semble_rs results are insufficient. Treat low-confidence `plan` output as
-leads, not facts. Do not use `--json` or open whole files unless the compact
-results are not enough.
-```
-
-### Per-project (any agent)
-
-Same content in a project-root `CLAUDE.md` or `AGENTS.md` works for Claude Code, Codex, Cursor (`.cursorrules`), Aider, and OpenHands.
+| Kotlin | ✓ | ✓ | ✓ |
+| Ruby | ✓ | ✓ | ✓ |
+| PHP | ✓ | ✓ | ✓ |
+| Swift | ✓ | ✓ | ✓ |
+| HTML / CSS / Vue / Svelte | ✓ | line-based | partial |
+| Other | ✓ | line-based | — |
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT
 
-Credits:
-- Upstream: [MinishLab/semble](https://github.com/MinishLab/semble) — the Python implementation this Rust port draws from.
-- Embedding model: [`minishlab/potion-code-16M`](https://huggingface.co/minishlab/potion-code-16M).
-- Built on: `tree-sitter`, `ndarray`, `safetensors`, `tokenizers`, `hf-hub`, `ignore`, `clap`.
+## Acknowledgements
+
+- [MinishLab/semble](https://github.com/MinishLab/semble) — original Python implementation by Stéphan Tulkens and Thomas van Dongen. `semble_rs` is a Rust port + superset of their work.
+- [Model2Vec](https://github.com/MinishLab/model2vec) and [model2vec-rs](https://github.com/MinishLab/model2vec-rs) — static distillation framework powering the embedder.
+- Embedding model: `minishlab/potion-code-16M`.

@@ -12,6 +12,7 @@ pub mod ranking;
 pub mod search;
 pub mod stats;
 pub mod tokens;
+pub mod tree;
 pub mod types;
 pub mod utils;
 

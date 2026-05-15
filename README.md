@@ -1,14 +1,14 @@
-&lt;!-- Keywords: code search, semantic code search, AI agent, LLM, BM25, embeddings, tree-sitter, AST, dependency graph, impact analysis, Rust, CLI, Claude Code, Codex, Cursor, grep replacement, token reduction, potion-code, model2vec, hybrid search, RRF, build output digest, CI log compression, korean code search, 한글 코드 검색 --&gt;
+<!-- Keywords: code search, semantic code search, AI agent, LLM, BM25, embeddings, tree-sitter, AST, dependency graph, impact analysis, Rust, CLI, Claude Code, Codex, Cursor, grep replacement, token reduction, potion-code, model2vec, hybrid search, RRF, build output digest, CI log compression, korean code search, 한글 코드 검색 -->
 
-&lt;h2 align="center"&gt; semble_rs&lt;br/&gt; Fast and Accurate Code Search for Agents — in Rust&lt;br/&gt; &lt;sub&gt;Replaces grep / cat / read / ls and compresses build & CI output. Up to &lt;b&gt;-99%&lt;/b&gt; tokens.&lt;/sub&gt; &lt;/h2&gt;
+<h2 align="center"> semble_rs<br/> Fast and Accurate Code Search for Agents — in Rust<br/> <sub>Replaces grep / cat / read / ls and compresses build & CI output. Up to <b>-99%</b> tokens.</sub> </h2>
 
-&lt;div align="center"&gt;
+<div align="center">
 
-&lt;p&gt; &lt;a href="https://opensource.org/licenses/MIT"&gt;&lt;img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"&gt;&lt;/a&gt; &lt;a href="https://www.rust-lang.org"&gt;&lt;img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust"&gt;&lt;/a&gt; &lt;img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg" alt="Platform"&gt; &lt;a href="#benchmarks"&gt;&lt;img src="https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg" alt="Token savings"&gt;&lt;/a&gt; &lt;a href="./README.ko.md"&gt;&lt;img src="https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-README.ko.md-blue.svg" alt="한국어"&gt;&lt;/a&gt; &lt;/p&gt;
+<p> <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a> <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-1.75%2B-orange.svg" alt="Rust"></a> <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue.svg" alt="Platform"> <a href="#benchmarks"><img src="https://img.shields.io/badge/agent%20tokens-up%20to%20--99%25-brightgreen.svg" alt="Token savings"></a> <a href="./README.ko.md"><img src="https://img.shields.io/badge/%ED%95%9C%EA%B5%AD%EC%96%B4-README.ko.md-blue.svg" alt="한국어"></a> </p>
 
-&lt;p&gt; &lt;a href="#quickstart"&gt;Quickstart&lt;/a&gt; • &lt;a href="#search"&gt;Search&lt;/a&gt; • &lt;a href="#tree"&gt;Tree&lt;/a&gt; • &lt;a href="#digest"&gt;Digest&lt;/a&gt; • &lt;a href="#dependency-graph"&gt;Deps / Impact&lt;/a&gt; • &lt;a href="#how-it-works"&gt;How it works&lt;/a&gt; • &lt;a href="#benchmarks"&gt;Benchmarks&lt;/a&gt; &lt;/p&gt;
+<p> <a href="#quickstart">Quickstart</a> • <a href="#search">Search</a> • <a href="#tree">Tree</a> • <a href="#digest">Digest</a> • <a href="#dependency-graph">Deps / Impact</a> • <a href="#how-it-works">How it works</a> • <a href="#benchmarks">Benchmarks</a> </p>
 
-&lt;/div&gt;
+</div>
 
 `semble_rs` is a Rust port and superset of [MinishLab/semble](https://github.com/MinishLab/semble) built for AI coding agents. It returns the exact code chunks an agent needs, prints a token-cheap codebase tree instead of `ls -R`, and compresses 3 MB CI logs into 35 KB. One single binary, no daemon, no API keys, no GPU. Hybrid BM25 + [Model2Vec](https://github.com/MinishLab/model2vec) static embeddings with code-aware reranking, plus a dependency graph, AST chunking, and a `digest` pipeline for build / test / CI output.
 
@@ -205,7 +205,7 @@ gh run view <id> --log-failed | semble_rs digest
 
 After fusion, results are reranked with code-aware signals:
 
-&lt;details&gt; &lt;summary&gt;&lt;b&gt;Ranking signals&lt;/b&gt;&lt;/summary&gt;
+<details> <summary><b>Ranking signals</b></summary>
 
 - **Adaptive weighting.** Symbol-like queries (`Foo::bar`, `_private`, `getUserById`) get more lexical weight; natural-language queries stay balanced.
 - **Definition boosts.** Chunks that define the queried symbol (a `class`, `def`, `func`, etc.) outrank chunks that merely reference it.
@@ -215,7 +215,7 @@ After fusion, results are reranked with code-aware signals:
 - **Dependency boost.** Chunks in files imported by a top hit get boosted so call-chain context surfaces.
 - **Noise penalties.** Test files, `compat/` / `legacy/` shims, example code, and `.d.ts` declaration stubs are down-ranked so canonical implementations surface first.
 
-&lt;/details&gt;
+</details>
 
 The embedder is fully static (vocab embedding lookup → mean pool → SIF weighting → L2 normalize). All of this runs in milliseconds on CPU.
 
